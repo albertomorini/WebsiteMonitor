@@ -1,22 +1,20 @@
 import requests
-from bs4 import *
-import hashlib
-import json
 from datetime import datetime
-import sys
 import json 
 import time
-import calendar
-import urllib
-import re
-from pprint import pprint
-
+import hashlib ## just for testing
+# import urllib ## to parse URI for examle
 
 PATHNAME_STORED= "./stored.json"
 BASE_URI = 'https://api.binance.com/api/v3/'
 
-PERCENTAGE_ALERT = 0.2
+PERCENTAGE_ALERT = 0.5
+SLEEP_TIME = 120 # 2 min
+STORE_FILE=False
 
+lastNotifications = list()
+
+############################################################################################################################################
 def doRequest(endpoint):
     res = requests.get(BASE_URI+endpoint)
     if (res.status_code==200):
@@ -34,7 +32,7 @@ def loadJSON():
     except Exception:
         return dict()
 
-
+# compare two dataslot from each other (actual, the previous one with the actual one)
 def compareRegisters(prev,actual):
     for i in prev: # all old currencies
         for j in actual: # all new currencies
@@ -42,31 +40,63 @@ def compareRegisters(prev,actual):
                 symbol = i.get("symbol")
                 old_price = float(i.get("price"))
                 new_price = float(j.get("price"))
-                percentage = (new_price-old_price)/ old_price * 100
-                if(percentage>PERCENTAGE_ALERT):
-                    print(symbol,"\t",percentage, new_price)
+                percentageIncrement = (new_price-old_price)/ old_price * 100
+                if(percentageIncrement>PERCENTAGE_ALERT):
+                    print(symbol,"\t",percentageIncrement, new_price)
+
+# compare the actual slot of data, with last notified data 
+def compareRegisters(actual):
+    global lastNotifications
+    for i in lastNotifications:
+        for j in actual:
+            if(i.get("symbol")==j.get("symbol")): ## if the same check the prices
+                symbol = i.get("symbol")
+                old_price = float(i.get("price"))
+                new_price = float(j.get("price"))
+                percentageIncrement = (new_price-old_price)/ old_price * 100
+                if(percentageIncrement>PERCENTAGE_ALERT):
+                    i.update({"time": getUnixtime()},{"price":new_price},{"increment":percentageIncrement})
+                    #TODO: telegram API integration (bot)
+                    # print(symbol,"\t",percentageIncrement, new_price)
 
 
+##########################################################################################################################################
 def start():
-    registers = loadJSON()
-    for i in range(0,2):
+    registers = loadJSON() #TODO: gestire il flag di non lettura
+    ff = getUnixtime()
+    while True:
         actual_register = doRequest("ticker/price")
+        dummyTimestamp = getUnixtime()
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.now()))
         
-        #compare with previous
-        try:
-            compareRegisters(registers[list(registers.keys())[-1]],actual_register)
+        global lastNotifications
+        if(not lastNotifications): #empty list of last value, set the actual
+            for i in actual_register:
+                i.update({"time": dummyTimestamp})
+            lastNotifications = actual_register
+        else:
+            pass ## TODO: add the new cryptos
+        
+        try: #compare with previous
+            # compareRegisters(registers[list(registers.keys())[-1]],actual_register) #compare actual vs last one
+            # compareRegisters(registers[list(registers.keys())[0]],actual_register) #compare actual vs the last notified increment (or first one)
+            compareRegisters(actual_register) #compare actual vs the last notified increment (or first one)
         except Exception:
             pass
 
+        for i in lastNotifications:
+            if(i.get('time')>ff):
+                print(i)
+
+        print("...................\n\n\n")
         registers[getUnixtime()] = actual_register #store into JSON
-        time.sleep(120)
+        time.sleep(SLEEP_TIME)
         
     # print(dummyDict)
 
-    ff = open("stored.json","w")
-    ff.write(json.dumps(registers))
-    ff.close
+    # ff = open("stored.json","w")
+    # ff.write(json.dumps(registers))
+    # ff.close
 
     
 
