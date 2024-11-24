@@ -68,12 +68,6 @@ def compareRegisters(actual):
                         print(Exception)
 
 
-def addNewCurrencies(actual):
-    global REGISTER_NOTIFICATION
-    # print(REGISTER_NOTIFICATION)
-    pass
-
-
 def sendAlert(notificationMessage):
     
     if(len(notificationMessage)>0):
@@ -91,10 +85,8 @@ def sendAlert(notificationMessage):
             str += " ||  " + format(old_time) + " - " + format(new_time)
             str +="%0A" # \n
             print(symbol)
-
-        print(str)
-
-        # telegramTalker.sendMessage(str)
+        telegramTalker.sendMessage(str)
+        print('message sent')
 
 
 ##########################################################################################################################################
@@ -119,6 +111,8 @@ def start():
             known_currencies = list (map((lambda x: x.get('symbol')), REGISTER_NOTIFICATION))
             print()
             new_ones = list (filter((lambda x: x.get('symbol') not in known_currencies), actual_register))
+            if(len(new_ones)>0):
+                print("new currencies: "+str(new_ones))
             for i in new_ones:
                 i.update({"time": actual_timestamp})
             REGISTER_NOTIFICATION = REGISTER_NOTIFICATION + new_ones
