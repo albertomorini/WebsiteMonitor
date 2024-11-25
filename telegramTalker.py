@@ -1,19 +1,10 @@
-
-
 import requests
 
-
-
-
 TOKEN = ""
-
 HEADERS = dict()
 HEADERS["Content-Type"] = "application/json"
 
-
-
 BASE_URI="https://api.telegram.org/bot"
-
 
 def loadToken(path="./TelegramToken.txt"):
     token_file = open(path,"r")
@@ -40,7 +31,6 @@ def sendMessage(message):
     for id in chat_ids:
         url = BASE_URI+TOKEN+f"/sendMessage?chat_id={id}&text={message}&parse_mode=HTML"
         print(requests.get(url).json()) # this sends the message
-
 
 
 loadToken()

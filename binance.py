@@ -4,7 +4,7 @@ import json
 import time
 import telegramTalker # import TelegramTalker
 import hashlib ## just for testing
-# import urllib ## to parse URI for examle
+
 
 PATHNAME_STORED= "./stored.json"
 BASE_URI = 'https://api.binance.com/api/v3/'
@@ -48,7 +48,7 @@ def compareRegisters(prev,actual):
                 old_price = float(i.get("price"))
                 new_price = float(j.get("price"))
                 percentageIncrement = (new_price-old_price)/ old_price * 100
-                if(percentageIncrement>PERCENTAGE_ALERT):
+                if(percentageIncrement>=PERCENTAGE_ALERT):
                     print(symbol,"\t",percentageIncrement, new_price)
 
 # compare the actual slot of data, with last notified data 
@@ -61,7 +61,7 @@ def compareRegisters(actual):
                 old_price = float(i.get("price"))
                 new_price = float(j.get("price"))
                 percentageIncrement = (new_price-old_price)/ old_price * 100
-                if(percentageIncrement>PERCENTAGE_ALERT): # UPDATE THE REGISTER
+                if(percentageIncrement>=PERCENTAGE_ALERT): # UPDATE THE REGISTER
                     try:
                         REGISTER_NOTIFICATION[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "old_time": i.get("time")}
                     except Exception:
@@ -93,43 +93,46 @@ def sendAlert(notificationMessage):
 def start():
     
     while True:
-        actual_register = doRequest("ticker/price")
-        actual_timestamp = getUnixtime()
-        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.now()))
-        
-        ## filter only the currency with USDC and USDT
-        actual_register = list (filter((lambda x: (x.get('symbol').find('USD')) != -1), actual_register))
-        
-        ## baptize the set with a timestamp
-        for i in actual_register:
-            i.update({"time": actual_timestamp})
-
-        global REGISTER_NOTIFICATION
-        if(not REGISTER_NOTIFICATION): #empty list of last value, set the actual
-            REGISTER_NOTIFICATION = actual_register
-        else:
-            known_currencies = list (map((lambda x: x.get('symbol')), REGISTER_NOTIFICATION))
-            print()
-            new_ones = list (filter((lambda x: x.get('symbol') not in known_currencies), actual_register))
-            if(len(new_ones)>0):
-                print("new currencies: "+str(new_ones))
-            for i in new_ones:
+        if(datetime.now().hour < 22 and  datetime.now().hour>9):
+            actual_register = doRequest("ticker/price")
+            actual_timestamp = getUnixtime()
+            print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.now()))
+            
+            ## filter only the currency with USDT
+            actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register))
+            
+            ## baptize the set with a timestamp
+            for i in actual_register:
                 i.update({"time": actual_timestamp})
-            REGISTER_NOTIFICATION = REGISTER_NOTIFICATION + new_ones
 
-        
+            global REGISTER_NOTIFICATION
+            if(not REGISTER_NOTIFICATION): #empty list of last value, set the actual
+                REGISTER_NOTIFICATION = actual_register
+            else:
+                known_currencies = list (map((lambda x: x.get('symbol')), REGISTER_NOTIFICATION))
+                print()
+                new_ones = list (filter((lambda x: x.get('symbol') not in known_currencies), actual_register))
+                if(len(new_ones)>0):
+                    print("new currencies: "+str(new_ones))
+                for i in new_ones:
+                    i.update({"time": actual_timestamp})
+                REGISTER_NOTIFICATION = REGISTER_NOTIFICATION + new_ones
 
-        compareRegisters(actual_register) #compare actual vs the last notified increment (or first one)
+            
 
-        ##########################################################################################
-        notificationMessage = list()
-        for i in REGISTER_NOTIFICATION:
-            if(i.get("time")>actual_timestamp): #just the currency updated that we need to notifiy
-                notificationMessage.append(i)
+            compareRegisters(actual_register) #compare actual vs the last notified increment (or first one)
 
-        sendAlert(notificationMessage)        
+            ##########################################################################################
+            notificationMessage = list()
+            for i in REGISTER_NOTIFICATION:
+                if(i.get("time")>actual_timestamp): #just the currency updated that we need to notifiy
+                    notificationMessage.append(i)
 
-        time.sleep(SLEEP_TIME)
-        print("...................\n\n\n")
+            sendAlert(notificationMessage)        
 
+            time.sleep(SLEEP_TIME)
+            print("...................\n\n\n")
+        else:
+            print("Waiting")
+            time.sleep(3590) # wait ah hour
 start()
