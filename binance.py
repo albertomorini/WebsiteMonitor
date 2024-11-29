@@ -15,6 +15,9 @@ STORE_FILE=False
 
 REGISTER_NOTIFICATION = list()
 
+def loadConfig():
+    global PERCENTAGE_ALERT 
+    global SLEEP_TIME
 
 ############################################################################################################################################
 def doRequest(endpoint):
