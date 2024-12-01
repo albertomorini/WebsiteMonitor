@@ -1,20 +1,15 @@
 import requests
 
-TOKEN = ""
+# https://stackoverflow.com/questions/67471470/telegram-bot-getupdates-does-not-contain-data
+
 HEADERS = dict()
 HEADERS["Content-Type"] = "application/json"
 
 BASE_URI="https://api.telegram.org/bot"
 
-def loadToken(path="./TelegramToken.txt"):
-    token_file = open(path,"r")
-    global TOKEN
-    TOKEN = token_file.read()
-    token_file.close()
 
-
-def getAllSubscribed():
-    URL = BASE_URI+TOKEN+"/getUpdates"
+def getAllSubscribed(token):
+    URL = BASE_URI+token+"/getUpdates"
     print(URL)
     res = requests.get(URL).json()
     print(res)
@@ -25,12 +20,10 @@ def getAllSubscribed():
     return ids
 
 
-def sendMessage(message):
-    chat_ids = getAllSubscribed()
+def sendMessage(token,message):
+    chat_ids = getAllSubscribed(token)
     print(chat_ids)
     for id in chat_ids:
-        url = BASE_URI+TOKEN+f"/sendMessage?chat_id={id}&text={message}&parse_mode=HTML"
+        url = BASE_URI+token+f"/sendMessage?chat_id={id}&text={message}&parse_mode=HTML"
         print(requests.get(url).json()) # this sends the message
 
-
-loadToken()
