@@ -69,7 +69,7 @@ def compareRegisters(actual):
 
 
 def sendAlert(notificationMessage):
-    
+    print(notificationMessage)
     if(len(notificationMessage)>0):
         str = '<b> Binance alert </b> %0A%0A'
         for i in notificationMessage:
@@ -94,13 +94,12 @@ def sendAlert(notificationMessage):
 def start():
     
     while True:
-        # if(datetime.now().hour < 22 and  datetime.now().hour>9):
         actual_register = doRequest("ticker/price")
         actual_timestamp = getUnixtime()
-        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.now()))
-        
         ## filter only the currency with USDT
         actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register))
+        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.now()))
+
         ## baptize the set with a timestamp
         for i in actual_register:
             i.update({"time": actual_timestamp})
@@ -113,9 +112,9 @@ def start():
             new_ones = list (filter((lambda x: x.get('symbol') not in known_currencies), actual_register))
             if(len(new_ones)>0):
                 print("Nuove monete: "+str(new_ones))
-            for i in new_ones:
-                i.update({"time": actual_timestamp})
-            REGISTER_NOTIFICATION = REGISTER_NOTIFICATION + new_ones
+                for i in new_ones:
+                    i.update({"time": actual_timestamp})
+                REGISTER_NOTIFICATION = REGISTER_NOTIFICATION + new_ones
         
         compareRegisters(actual_register) #compare actual vs the last notified increment (or first one)
 
@@ -132,8 +131,6 @@ def start():
         
         time.sleep(SLEEP_TIME)
         print("...................\n\n\n")
-        # else:
-        #     time.sleep(1590) # wait ah hour
 
 
 
