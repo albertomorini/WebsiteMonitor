@@ -25,10 +25,9 @@ def getAllSubscribed(token):
     return ids
 
 
-def sendMessage(token,message):
+def sendMessage(token,message,guardiaFirstSend=True):
     # chat_ids = set(getAllSubscribed(token))
     # print(chat_ids)
-    firstTry = True
     try:
         chat_ids = ["49797109", "6406710754"]
         for id in chat_ids:
@@ -39,9 +38,9 @@ def sendMessage(token,message):
                 pass
     except Exception as e:
         print("ERRORE MESSAGGIO TELEGRAM: " + str(e))
-        if(firstTry):
+        if(guardiaFirstSend):
             time.sleep(5)
-            sendMessage(token,message)
+            sendMessage(token,message,False)
         else:
             pass
 

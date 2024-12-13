@@ -30,7 +30,7 @@ def loadConfig():
     TELEGRAM_TOKEN=x.get("TelegramToken")
 
 ############################################################################################################################################
-def doRequest(endpoint):
+def doRequest(endpoint,guardiaFirstSend=True):
     try:
         res = requests.get(BASE_URI+endpoint)
         if (res.status_code==200):
@@ -39,8 +39,9 @@ def doRequest(endpoint):
             return null
     except Exception:
         print("ERRORE fetching sito")
-        time.sleep(5)
-        doRequest(endpoint)
+        if(guardiaFirstSend):
+            time.sleep(5)
+            doRequest(endpoint,False)
 
 def getUnixtime():
     return (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
@@ -149,15 +150,19 @@ def start():
 #############################################################################
 
 def main(modep=None):
-    loadConfig()
     global MODE 
     try:
         MODE = str(sys.argv[1]).lower()
     except Exception:
-        pass
-    if(MODE==None):
-        MODE=modep
-    print("Programma avviato - modalità: "+MODE)
+        print(MODE)
+        if(MODE==None):
+            print(modep)
+            MODE=modep
+
+    loadConfig()
+    print("Programma avviato - modalità: "+str(MODE))
     start()
 
-main()
+if(len(sys.argv)>1):
+    main()
+
