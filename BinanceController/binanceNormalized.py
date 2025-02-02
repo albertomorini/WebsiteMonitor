@@ -113,14 +113,11 @@ def compareRegisters(actual):
                         pass
                     if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter
                             dummy_IncrementCounter +=1
-                            if(dummy_LossCounter>0):
+                            if(dummy_LossCounter>0): #otherwise the loss won't be detected
                                 dummy_LossCounter -=1
-                            # # print(symbol + " aumentata, incremento contatore -> positivo: "+str(dummy_IncrementCounter) + " | contPerdita: "+str(dummy_LossCounter))
                     elif(dummy_IncrementCounter>= INCREMENT_COUNTER ): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
-                            # # print(symbol + " DECREMENTATA, incremento contatore -> positivo: "+str(dummy_IncrementCounter) + " | contPerdita: "+str(dummy_LossCounter))
                             dummy_IncrementCounter = INCREMENT_COUNTER-1 # chef kiss
                             dummy_LossCounter = dummy_LossCounter + 1
-                            ##TODO: da rimuovere quando scende di troppo
 
                     REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter}
 
@@ -130,6 +127,7 @@ def compareRegisters(actual):
 
 
 def start():
+    print("Binance normalized avviato.")
     while True:
         actual_register = doRequest("ticker/price")
         actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDT
@@ -170,6 +168,8 @@ def start():
             if(i.get("LOSS_COUNTER")>=LOSS_COUNTER):
                 print("--- PERDITA\t", i.get("symbol"), i.get("increment"))
             #     notificationMessage.append(i)
+            ##TODO: da rimuovere quando scende di troppo
+
 
         sendAlert(notificationMessage)
 
@@ -177,7 +177,7 @@ def start():
         #     REGISTER_GLOBAL = actual_register
 
         time.sleep(SLEEP_TIME)
-        # print("...................\n\n\n")
+        print("...................\n\n\n")
 
 
 #############################################################################
