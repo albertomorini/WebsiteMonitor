@@ -3,6 +3,8 @@
 
 This tool checks for you if a webpage change content (text) through time
 
+> sub program with Binance Controller to control the cryptomarket via binance API
+
 ## IDEA
 
 Do an hash (MD5) of the text on the webpage and store the digest, if something change, we will get it.
