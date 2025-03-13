@@ -13,6 +13,8 @@ PERCENTAGE_ALERT = 2
 SLEEP_TIME = 120 # 2 min
 TELEGRAM_TOKEN = ''
 
+TO_IGNORE = []
+
 REGISTER_NOTIFICATION = list()
 ############################################################################################################################################
 ############################################################################################################################################
@@ -21,6 +23,8 @@ def loadConfig():
     global PERCENTAGE_ALERT 
     global SLEEP_TIME
     global TELEGRAM_TOKEN
+    global TO_IGNORE
+
     x = loadJSON('./UltimaNotifica_Config.json') #default ultima modifica
     if(MODE=='ultimoprezzo'):
         x = loadJSON('./UltimoPrezzo_Config.json') #default ultima modifica
@@ -28,6 +32,7 @@ def loadConfig():
     PERCENTAGE_ALERT=x.get('PercentualeAvviso')
     SLEEP_TIME=x.get('SecondiAttesa')
     TELEGRAM_TOKEN=x.get("TelegramToken")
+    TO_IGNORE = x.get("DaIgnorare")
 
 ############################################################################################################################################
 def doRequest(endpoint,guardiaFirstSend=True):
@@ -72,8 +77,8 @@ def compareRegisters(actual):
                     try:
                         percentageIncrement = (new_price-old_price)/ old_price * 100
                     except Exception as e:
-                        percentageIncrement = 0 #ignoring the division by 0
-                        
+                        percentageIncrement=0
+
                     if(percentageIncrement>=PERCENTAGE_ALERT): # UPDATE THE REGISTER
                         print("\t ALERT: " + str(symbol) + " - incremento del: " + str(percentageIncrement) + " ORE: " + str(convertUnix2HumanTime(getUnixtime())) + " - " + str(convertUnix2HumanTime(i.get("time"))) )
                         try:
@@ -81,6 +86,7 @@ def compareRegisters(actual):
                         except Exception:
                             print(Exception)
     except Exception as e:
+        print(e)
         pass
 
 ## Just create the message and send to Telegram Bot
@@ -102,6 +108,7 @@ def sendAlert(notificationMessage):
                 str += " ||  " + format(old_time) + " - " + format(new_time)
                 str +="%0A" # \n
                 
+            # print(str)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,str)
     except Exception as e:
         pass
@@ -114,12 +121,18 @@ def start():
     while True:
         actual_register = doRequest("ticker/price")
         actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDT
-        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         actual_timestamp = getUnixtime()
         ## baptize the set with a timestamp
         for i in actual_register:
             i.update({"time": actual_timestamp})
+
+        ## ADDED LATELY: removing unwanted symbols
+        for x in actual_register:
+            if(x.get("symbol") in TO_IGNORE):
+                actual_register.remove(x)
+        
+        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         global REGISTER_NOTIFICATION
         if(not REGISTER_NOTIFICATION): #empty list of last value, set the actual
@@ -135,7 +148,7 @@ def start():
         
 
         compareRegisters(actual_register) #compare actual vs the last notified increment (or first one)
-
+        
         ##########################################################################################
         notificationMessage = list()
         for i in REGISTER_NOTIFICATION:
@@ -169,4 +182,3 @@ def main(modep=None):
 
 if(len(sys.argv)>1):
     main()
-
