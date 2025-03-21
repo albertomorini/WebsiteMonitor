@@ -14,6 +14,7 @@ SLEEP_TIME = 120 # 2 min
 INCREMENT_COUNTER = -1
 INCREMENT_PERCENTAGE = -1
 LOSS_COUNTER= -1
+LOSS_PERCENTAGEMAX = -1
 
 TO_IGNORE = []
 
@@ -27,6 +28,7 @@ def loadConfig():
     global INCREMENT_PERCENTAGE
     global LOSS_COUNTER
     global TO_IGNORE
+    global LOSS_PERCENTAGEMAX
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -36,6 +38,7 @@ def loadConfig():
     INCREMENT_PERCENTAGE  = x.get("PercentualeIncremento")
     LOSS_COUNTER = x.get("ContatorePerdita")
     TO_IGNORE = x.get("DaIgnorare")
+    LOSS_PERCENTAGEMAX = x.get("PercentualePerditaMASSIMA")
 
 ############################################################################################################################################
 def doRequest(endpoint,guardiaFirstSend=True):
@@ -128,14 +131,15 @@ def compareRegisters(actual):
                         if(dummy_IncrementCounter==INCREMENT_COUNTER):
                             toNotify=True
                             verse=1
-                            dummy_LossCounter=0 #resetto il loss counter
+                            # dummy_LossCounter=0 #resetto il loss counter --- TMP FOR DEBUG?
                     elif(dummy_IncrementCounter>= INCREMENT_COUNTER): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
                         dummy_LossCounter += 1
+                        if(percentageIncrement>LOSS_PERCENTAGEMAX): #then we need to sell immediately, sign as losing, it's dropped
+                            dummy_LossCounter=LOSS_COUNTER
                         if(dummy_LossCounter==LOSS_COUNTER):
                             toNotify=True
                             verse=-1
-                            dummy_IncrementCounter=0 #resetto
-
+                            # dummy_IncrementCounter=0 #resetto --- TMP FOR DEBUG?
 
                     REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter, "toNotify": toNotify, "verse": verse}
 
@@ -189,11 +193,12 @@ def start():
                 if(i.get("verse")>0):
                     print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 1})
+                    i.set("LOSS_COUNTER",0)
                 else:
                     print("-- SCESA\t", i.get("symbol"), i.get("LOSS_COUNTER"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 0})
+                    i.set("INCREMENT_COUNTER",0)
 
-        # notificationMessage.sort(key=lambda x: x["flag"], reverse=True)
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
