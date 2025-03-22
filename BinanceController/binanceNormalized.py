@@ -86,6 +86,7 @@ def sendAlert(notificationMessage):
                 increment = data.get("INCREMENT_COUNTER")
                 decrement = data.get("LOSS_COUNTER")
                 price = data.get("price")
+                print(symbol, price)
                 new_time= convertUnix2HumanTime(data.get("time"))
 
                 # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
@@ -131,7 +132,7 @@ def compareRegisters(actual):
                         if(dummy_IncrementCounter==INCREMENT_COUNTER):
                             toNotify=True
                             verse=1
-                            # dummy_LossCounter=0 #resetto il loss counter --- TMP FOR DEBUG?
+                            dummy_LossCounter=0 #resetto il loss counter --- TMP FOR DEBUG?
                     elif(dummy_IncrementCounter>= INCREMENT_COUNTER): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
                         dummy_LossCounter += 1
                         if(percentageIncrement>LOSS_PERCENTAGEMAX): #then we need to sell immediately, sign as losing, it's dropped
@@ -139,7 +140,7 @@ def compareRegisters(actual):
                         if(dummy_LossCounter==LOSS_COUNTER):
                             toNotify=True
                             verse=-1
-                            # dummy_IncrementCounter=0 #resetto --- TMP FOR DEBUG?
+                            dummy_IncrementCounter=0 #resetto --- TMP FOR DEBUG?
 
                     REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter, "toNotify": toNotify, "verse": verse}
 
@@ -191,13 +192,13 @@ def start():
         for i in REGISTER_GLOBAL:
             if(i.get("toNotify")):
                 if(i.get("verse")>0):
-                    print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("increment"))
+                    print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("LOSS_COUNTER"), i.get("price"))
                     notificationMessage.append({"cur": i, "flag": 1})
-                    i.set("LOSS_COUNTER",0)
+                    # i["LOSS_COUNTER"]=0
                 else:
-                    print("-- SCESA\t", i.get("symbol"), i.get("LOSS_COUNTER"), i.get("increment"))
+                    print("-- SCESA\t", i.get("symbol"),i.get("INCREMENT_COUNTER"), i.get("LOSS_COUNTER"), i.get("price"))
                     notificationMessage.append({"cur": i, "flag": 0})
-                    i.set("INCREMENT_COUNTER",0)
+                    # i["INCREMENT_COUNTER"]=0
 
         sendAlert(notificationMessage)
 
