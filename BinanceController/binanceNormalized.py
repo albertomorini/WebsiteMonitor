@@ -78,9 +78,9 @@ def sendAlert(notificationMessage):
             for i in notificationMessage:
                 data = i.get("cur")
                 if(i.get("flag")==0):
-                    symbol = "--: "+ data.get("symbol")#loosing
+                    symbol = "<b>PERDITA</b>: "+ data.get("symbol")#loosing
                 else:
-                    symbol = "%2B%2B" + data.get("symbol")
+                    symbol = "<i>SALITA</i>" + data.get("symbol")
 
 
                 increment = data.get("INCREMENT_COUNTER")
