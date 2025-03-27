@@ -13,8 +13,7 @@ TELEGRAM_TOKEN = ''
 SLEEP_TIME = 120 # 2 min
 INCREMENT_COUNTER = -1
 INCREMENT_PERCENTAGE = -1
-LOSS_COUNTER= -1
-LOSS_PERCENTAGEMAX = -1
+LOSS_PERCENTAGE = -1
 
 TO_IGNORE = []
 
@@ -26,9 +25,8 @@ def loadConfig():
     global TELEGRAM_TOKEN
     global INCREMENT_COUNTER
     global INCREMENT_PERCENTAGE
-    global LOSS_COUNTER
+    global LOSS_PERCENTAGE
     global TO_IGNORE
-    global LOSS_PERCENTAGEMAX
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -36,9 +34,8 @@ def loadConfig():
     TELEGRAM_TOKEN = x.get("TELEGRAMTOKEN")
     INCREMENT_COUNTER  = x.get("ContatoreIncremento")
     INCREMENT_PERCENTAGE  = x.get("PercentualeIncremento")
-    LOSS_COUNTER = x.get("ContatorePerdita")
+    LOSS_PERCENTAGE = x.get("PercentualePerdita")
     TO_IGNORE = x.get("DaIgnorare")
-    LOSS_PERCENTAGEMAX = x.get("PercentualePerditaMASSIMA")
 
 ############################################################################################################################################
 def doRequest(endpoint,guardiaFirstSend=True):
@@ -80,7 +77,7 @@ def sendAlert(notificationMessage):
                 if(i.get("flag")==0):
                     symbol = "<b>PERDITA</b>: "+ data.get("symbol")#loosing
                 else:
-                    symbol = "<i>SALITA</i>" + data.get("symbol")
+                    symbol = "<i>SALITA</i>: " + data.get("symbol")
 
 
                 increment = data.get("INCREMENT_COUNTER")
@@ -92,11 +89,15 @@ def sendAlert(notificationMessage):
                 # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
                 strTMP += "<b>"+symbol + "</b>  " #senza URL
                 strTMP += str(price)   #senza URL
-                strTMP += " - UP: " + format(increment)
-                strTMP += " - DOWN: " + format(decrement)
+                if(i.get("flag")==0):
+                    strTMP += "  <b>" + format(increment)+"%</b>"
+                else:
+                    strTMP += "  <i>" + format(increment)+"%</i>"
+
                 strTMP += " || " + format(new_time)
                 strTMP +="%0A" # \n
             
+            print(strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -117,32 +118,37 @@ def compareRegisters(actual):
                 if(symbol==j.get("symbol")): ## if the same check the prices
                     old_price = float(i.get("price"))
                     new_price = float(j.get("price"))
-                    dummy_IncrementCounter = int(i.get("INCREMENT_COUNTER"))
-                    dummy_LossCounter = int(i.get("LOSS_COUNTER"))
                     percentageIncrement=0
                     try:
                         percentageIncrement = (new_price-old_price)/ old_price * 100
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
+                    
 
+                    incrementCounter = int(i.get("INCREMENT_COUNTER"))
                     toNotify= False
                     verse=0
-                    if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter
-                        dummy_IncrementCounter +=1
-                        if(dummy_IncrementCounter==INCREMENT_COUNTER):
-                            toNotify=True
-                            verse=1
-                            dummy_LossCounter=0 #resetto il loss counter --- TMP FOR DEBUG?
-                    elif(dummy_IncrementCounter>= INCREMENT_COUNTER): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
-                        dummy_LossCounter += 1
-                        if(percentageIncrement>LOSS_PERCENTAGEMAX): #then we need to sell immediately, sign as losing, it's dropped
-                            dummy_LossCounter=LOSS_COUNTER
-                        if(dummy_LossCounter==LOSS_COUNTER):
-                            toNotify=True
-                            verse=-1
-                            dummy_IncrementCounter=0 #resetto --- TMP FOR DEBUG?
+                    if(percentageIncrement>=INCREMENT_PERCENTAGE ): # Up the increment counter - currency is growning
+                        incrementCounter += 1 #if up, increment the counter
+                    elif(incrementCounter>=INCREMENT_COUNTER and percentageIncrement<0): # loosing 
+                        toNotify=True
+                        verse=-1
+                        incrementCounter = 0 # stop grow then, reset the counter
+                    
+                    # if(incrementCounter==INCREMENT_COUNTER): ## TODO: da fare in modulo, non posso resettare il contatore, equivalerebbe a una perdita
+                    if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): ## TODO: da vedere/commentare il percentage<>0
+                        toNotify=True
+                        verse=1
 
-                    REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter, "toNotify": toNotify, "verse": verse}
+                    REGISTER_GLOBAL[indx] = {
+                        "symbol":symbol,
+                        "time": getUnixtime(),
+                        "price":new_price, 
+                        "increment":percentageIncrement,
+                        "INCREMENT_COUNTER": incrementCounter,
+                        "toNotify": toNotify,
+                        "verse": verse
+                    }
 
     except Exception as e:
         print("ERROR: ", e)
@@ -167,7 +173,6 @@ def start():
         for i in actual_register:
             i.update({"time": actual_timestamp})
             i.update({"INCREMENT_COUNTER": 0}) # init
-            i.update({"LOSS_COUNTER": 0}) # init
 
 
         global REGISTER_GLOBAL
@@ -181,7 +186,6 @@ def start():
                 for i in new_ones:
                     i.update({"time": actual_timestamp})
                     i.update({"INCREMENT_COUNTER": 0}) # init
-                    i.update({"LOSS_COUNTER": 0}) # init
                 REGISTER_GLOBAL = REGISTER_GLOBAL + new_ones
 
 
@@ -192,13 +196,11 @@ def start():
         for i in REGISTER_GLOBAL:
             if(i.get("toNotify")):
                 if(i.get("verse")>0):
-                    print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("LOSS_COUNTER"), i.get("price"))
+                    # print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("price"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 1})
-                    # i["LOSS_COUNTER"]=0
                 else:
-                    print("-- SCESA\t", i.get("symbol"),i.get("INCREMENT_COUNTER"), i.get("LOSS_COUNTER"), i.get("price"))
+                    # print("-- SCESA\t", i.get("symbol"),i.get("INCREMENT_COUNTER"), i.get("price"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 0})
-                    # i["INCREMENT_COUNTER"]=0
 
         sendAlert(notificationMessage)
 
