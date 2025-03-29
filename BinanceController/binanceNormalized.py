@@ -75,9 +75,9 @@ def sendAlert(notificationMessage):
             for i in notificationMessage:
                 data = i.get("cur")
                 if(i.get("flag")==0):
-                    symbol = "<b>PERDITA</b>: "+ data.get("symbol")#loosing
+                    symbol = "🟥 "+ data.get("symbol")#loosing
                 else:
-                    symbol = "<i>SALITA</i>: " + data.get("symbol")
+                    symbol = "🟢 " + data.get("symbol")
 
 
                 increment = data.get("INCREMENT_COUNTER")
@@ -90,14 +90,13 @@ def sendAlert(notificationMessage):
                 strTMP += "<b>"+symbol + "</b>  " #senza URL
                 strTMP += str(price)   #senza URL
                 if(i.get("flag")==0):
-                    strTMP += "  <b>" + format(increment)+"%</b>"
+                    strTMP += " // "+str(data.get("old_price")) #+ "  <b>" + format(increment)+"%</b>"
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
-                strTMP += " || " + format(new_time)
-                strTMP +="%0A" # \n
+                strTMP += " || " + format(new_time) +" \n"
+                # strTMP +="\%0A" # \n
             
-            print(strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -130,13 +129,13 @@ def compareRegisters(actual):
                     verse=0
                     if(percentageIncrement>=INCREMENT_PERCENTAGE ): # Up the increment counter - currency is growning
                         incrementCounter += 1 #if up, increment the counter
-                    elif(incrementCounter>=INCREMENT_COUNTER and percentageIncrement<0): # loosing 
+                    elif(incrementCounter>=INCREMENT_COUNTER and abs(percentageIncrement)>=LOSS_PERCENTAGE): # loosing 
                         toNotify=True
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
                     
-                    # if(incrementCounter==INCREMENT_COUNTER): ## TODO: da fare in modulo, non posso resettare il contatore, equivalerebbe a una perdita
-                    if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): ## TODO: da vedere/commentare il percentage<>0
+                    # if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): ## TODO: da vedere/commentare il percentage<>0
+                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>0): ## TODO: da fare in modulo, non posso resettare il contatore, equivalerebbe a una perdita
                         toNotify=True
                         verse=1
 
@@ -147,6 +146,7 @@ def compareRegisters(actual):
                         "increment":percentageIncrement,
                         "INCREMENT_COUNTER": incrementCounter,
                         "toNotify": toNotify,
+                        "old_price": old_price,
                         "verse": verse
                     }
 
@@ -157,6 +157,7 @@ def compareRegisters(actual):
 
 def start():
     print("Binance normalized avviato.")
+    counter = 0
     while True:
         actual_register = doRequest("ticker/price")
         actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDT
@@ -205,6 +206,10 @@ def start():
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
+        counter+=1
+        if(counter>20000):
+            break
+            
         # print("...................\n\n\n")
 
 
