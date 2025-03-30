@@ -79,18 +79,18 @@ def sendAlert(notificationMessage):
                 else:
                     symbol = "🟢 " + data.get("symbol")
 
-
-                increment = data.get("INCREMENT_COUNTER")
+                increment = round(data.get("increment"),2)
                 decrement = data.get("LOSS_COUNTER")
                 price = data.get("price")
-                print(symbol, price)
+                # print(symbol, price, increment, str(data.get("INCREMENT_COUNTER")))
+
                 new_time= convertUnix2HumanTime(data.get("time"))
 
                 # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
                 strTMP += "<b>"+symbol + "</b>  " #senza URL
                 strTMP += str(price)   #senza URL
                 if(i.get("flag")==0):
-                    strTMP += " // "+str(data.get("old_price")) #+ "  <b>" + format(increment)+"%</b>"
+                    strTMP += " // "+str(data.get("old_price")) + "  <b>" + format(increment)+"%</b> "
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
@@ -134,8 +134,8 @@ def compareRegisters(actual):
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
                     
-                    # if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): ## TODO: da vedere/commentare il percentage<>0
-                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>0): ## TODO: da fare in modulo, non posso resettare il contatore, equivalerebbe a una perdita
+                    # if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): 
+                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): 
                         toNotify=True
                         verse=1
 
@@ -197,10 +197,8 @@ def start():
         for i in REGISTER_GLOBAL:
             if(i.get("toNotify")):
                 if(i.get("verse")>0):
-                    # print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("price"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 1})
                 else:
-                    # print("-- SCESA\t", i.get("symbol"),i.get("INCREMENT_COUNTER"), i.get("price"), i.get("increment"))
                     notificationMessage.append({"cur": i, "flag": 0})
 
         sendAlert(notificationMessage)
