@@ -82,7 +82,6 @@ def sendAlert(notificationMessage):
                 increment = round(data.get("increment"),2)
                 decrement = data.get("LOSS_COUNTER")
                 price = data.get("price")
-                
 
                 new_time= convertUnix2HumanTime(data.get("time"))
 
@@ -90,7 +89,7 @@ def sendAlert(notificationMessage):
                 strTMP += "<b>"+symbol + "</b>  " #senza URL
                 strTMP += str(price)   #senza URL
                 if(i.get("flag")==0):
-                    strTMP += " // "+str(data.get("old_price")) + "  <b>" + format(increment)+"%</b> "
+                    strTMP += " // "+str(data.get("prezzoAlto")) + "  <b>" + format(increment)+"%</b> "
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
@@ -119,9 +118,16 @@ def compareRegisters(actual):
                 if(symbol==j.get("symbol")): ## if the same check the prices
                     old_price = float(i.get("price"))
                     new_price = float(j.get("price"))
+                    prezzoAlto = 0
+                    try:
+                        prezzoAlto = float(i.get("prezzoAlto"))
+                    except:
+                        pass
+                    prezzoAlto = max(prezzoAlto,new_price)
+
                     percentageIncrement=0
                     try:
-                        percentageIncrement = (new_price-old_price)/ old_price * 100
+                        percentageIncrement = (new_price-prezzoAlto)/ prezzoAlto * 100
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
                     
@@ -142,9 +148,11 @@ def compareRegisters(actual):
                         verse=1
 
                     REGISTER_GLOBAL[indx] = {
+                        "prezzoAlto": prezzoAlto,
                         "symbol":symbol,
                         "time": getUnixtime(),
                         "price":new_price, 
+                        "priceAlto":new_price, 
                         "increment":percentageIncrement,
                         "INCREMENT_COUNTER": incrementCounter,
                         "toNotify": toNotify,
