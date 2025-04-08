@@ -136,20 +136,6 @@ def compareRegisters(actual):
                             verse=-1
                             dummy_IncrementCounter=0 #resetto
 
-                   
-                    # ____________________________________________________-
-                    # ____________________________________________________-
-                    # if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter
-                    #         dummy_IncrementCounter +=1
-                    #         if(dummy_LossCounter>0): #otherwise the loss won't be detected
-                    #             dummy_LossCounter -=1
-                    #         if(dummy_LossCounter>LOSS_COUNTER): ##OPTIONALE: SENTI ANDREA
-                    #             dummy_LossCounter=dummy_LossCounter/2 # chef kiss again (if one is loosing a lot, then start growing up, we lower the counter)
-                    # elif(dummy_IncrementCounter>= INCREMENT_COUNTER ): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
-                    #         print("LOOSING: ", symbol,( dummy_LossCounter+1))
-                    #         dummy_IncrementCounter = INCREMENT_PERCENTAGE/3 # chef kiss (the top which we notify minus one)
-                    #         dummy_LossCounter = dummy_LossCounter + 1
-
 
                     REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter, "toNotify": toNotify, "verse": verse}
 
