@@ -71,12 +71,11 @@ def sendAlert(notificationMessage):
     try:
         if(len(notificationMessage)>0):
             # str = '<b> BINANCE ALERT </b> %0A%0A'
-            str = ''
+            strTMP = ''
             for i in notificationMessage:
                 data = i.get("cur")
-                print(data)
                 if(i.get("flag")==0):
-                    symbol = "PERDITA: "+ data.get("symbol")#loosing
+                    symbol = "--: "+ data.get("symbol")#loosing
                 else:
                     symbol = "%2B%2B" + data.get("symbol")
 
@@ -87,15 +86,14 @@ def sendAlert(notificationMessage):
                 new_time= convertUnix2HumanTime(data.get("time"))
 
                 # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
-                str += "<b>"+symbol + "</b>  " #senza URL
-                str += "<b>"+str(price) + "</b>  " #senza URL
-                str += " - UP: " + format(increment)
-                str += " - DOWN: " + format(decrement)
-                str += " || " + format(new_time)
-                str +="%0A" # \n
+                strTMP += "<b>"+symbol + "</b>  " #senza URL
+                strTMP += str(price)   #senza URL
+                strTMP += " - UP: " + format(increment)
+                strTMP += " - DOWN: " + format(decrement)
+                strTMP += " || " + format(new_time)
+                strTMP +="%0A" # \n
             
-
-            telegramTalker.sendMessage(TELEGRAM_TOKEN,str)
+            telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
         pass
@@ -123,18 +121,37 @@ def compareRegisters(actual):
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
 
+                    toNotify= False
+                    verse=0
                     if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter
-                            dummy_IncrementCounter +=1
-                            if(dummy_LossCounter>0): #otherwise the loss won't be detected
-                                dummy_LossCounter -=1
-                            if(dummy_LossCounter>LOSS_COUNTER): ##OPTIONALE: SENTI ANDREA
-                                dummy_LossCounter=dummy_LossCounter/2 # chef kiss again (if one is loosing a lot, then start growing up, we lower the counter)
-                    elif(dummy_IncrementCounter>= INCREMENT_COUNTER ): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
-                            print("LOOSING: ", symbol,( dummy_LossCounter+1))
-                            dummy_IncrementCounter = INCREMENT_PERCENTAGE/2 # chef kiss (the top which we notify minus one)
-                            dummy_LossCounter = dummy_LossCounter + 1
+                        dummy_IncrementCounter +=1
+                        if(dummy_IncrementCounter==INCREMENT_COUNTER):
+                            toNotify=True
+                            verse=1
+                            dummy_LossCounter=0 #resetto il loss counter
+                    elif(dummy_IncrementCounter>= INCREMENT_COUNTER): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
+                        dummy_LossCounter += 1
+                        if(dummy_LossCounter==LOSS_COUNTER):
+                            toNotify=True
+                            verse=-1
+                            dummy_IncrementCounter=0 #resetto
 
-                    REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter}
+                   
+                    # ____________________________________________________-
+                    # ____________________________________________________-
+                    # if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter
+                    #         dummy_IncrementCounter +=1
+                    #         if(dummy_LossCounter>0): #otherwise the loss won't be detected
+                    #             dummy_LossCounter -=1
+                    #         if(dummy_LossCounter>LOSS_COUNTER): ##OPTIONALE: SENTI ANDREA
+                    #             dummy_LossCounter=dummy_LossCounter/2 # chef kiss again (if one is loosing a lot, then start growing up, we lower the counter)
+                    # elif(dummy_IncrementCounter>= INCREMENT_COUNTER ): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
+                    #         print("LOOSING: ", symbol,( dummy_LossCounter+1))
+                    #         dummy_IncrementCounter = INCREMENT_PERCENTAGE/3 # chef kiss (the top which we notify minus one)
+                    #         dummy_LossCounter = dummy_LossCounter + 1
+
+
+                    REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter, "toNotify": toNotify, "verse": verse}
 
     except Exception as e:
         print("ERROR: ", e)
@@ -182,13 +199,13 @@ def start():
         # ##########################################################################################
         notificationMessage = list()
         for i in REGISTER_GLOBAL:
-            ## now we tell if is in loss or in grow --> checking the counter
-            if(i.get("INCREMENT_COUNTER")==INCREMENT_COUNTER):
-                print("++ SALITA\t", i.get("symbol"), i.get("increment"))
-                notificationMessage.append({"cur": i, "flag": 1})
-            if(i.get("LOSS_COUNTER")==LOSS_COUNTER):
-                print("--- PERDITA\t", i.get("symbol"), i.get("increment"))
-                notificationMessage.append({"cur": i, "flag": 0})
+            if(i.get("toNotify")):
+                if(i.get("verse")>0):
+                    print("++ SALITA\t", i.get("symbol"), i.get("INCREMENT_COUNTER"), i.get("increment"))
+                    notificationMessage.append({"cur": i, "flag": 1})
+                else:
+                    print("-- SCESA\t", i.get("symbol"), i.get("LOSS_COUNTER"), i.get("increment"))
+                    notificationMessage.append({"cur": i, "flag": 0})
 
         # notificationMessage.sort(key=lambda x: x["flag"], reverse=True)
         sendAlert(notificationMessage)
