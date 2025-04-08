@@ -73,6 +73,7 @@ def sendAlert(notificationMessage):
             strTMP = ''
             for i in notificationMessage:
                 data = i.get("cur")
+                print(data)
                 if(i.get("flag")==0):
                     symbol = "🟥 "+ data.get("symbol")#loosing
                 else:
@@ -90,7 +91,7 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-                print(strTMP)
+                # print(strTMP)
 
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
@@ -111,8 +112,7 @@ def compareRegisters(actual):
                 symbol = i.get("symbol")
                 if(symbol==j.get("symbol")): ## if the same check the prices
                     new_price = float(j.get("price"))
-
-                    max_price=0
+               
                     if(i.get("max_price")==None):
                         max_price=float(i.get("price"))
                     else:
@@ -120,19 +120,20 @@ def compareRegisters(actual):
 
                     percentageIncrement=0
                     try:
-                        percentageIncrement = (new_price-max_price)/ max_price * 100
+                        percentageIncrement = ((new_price-max_price)/ max_price) * 100
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
                     
                     incrementCounter = int(i.get("INCREMENT_COUNTER"))
                     verse=0
-                    if(percentageIncrement>=INCREMENT_PERCENTAGE ): # Up the increment counter - currency is growning
+                    if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning
                         incrementCounter += 1 #if up, increment the counter
                         max_price=new_price
-                    elif(incrementCounter>=INCREMENT_COUNTER and abs(percentageIncrement)>=LOSS_PERCENTAGE): # loosing 
+                    elif(incrementCounter>=INCREMENT_COUNTER and  -1*percentageIncrement>=LOSS_PERCENTAGE): # loosing 
+                        print(percentageIncrement)
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
-                        max_price=None #TODO: CHIEDERE AD ANDREA
+                        #max_price=None #TODO: CHIEDERE AD ANDREA
                     
                     if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): 
                         verse=1
@@ -157,7 +158,7 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDT
+        actual_register = list (filter((lambda x: (x.get('symbol').find('USDC')) != -1), actual_register)) ## filter only the currency with USDC
         #print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
