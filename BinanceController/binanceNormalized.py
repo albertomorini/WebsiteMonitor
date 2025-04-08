@@ -14,8 +14,8 @@ SLEEP_TIME = 120 # 2 min
 INCREMENT_COUNTER = -1
 INCREMENT_PERCENTAGE = -1
 LOSS_COUNTER= -1
-LOSS_PERCENTAGE = -1
 
+TO_IGNORE = []
 
 REGISTER_GLOBAL = list()
 ############################################################################################################################################
@@ -26,7 +26,7 @@ def loadConfig():
     global INCREMENT_COUNTER
     global INCREMENT_PERCENTAGE
     global LOSS_COUNTER
-    global LOSS_PERCENTAGE
+    global TO_IGNORE
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -35,7 +35,7 @@ def loadConfig():
     INCREMENT_COUNTER  = x.get("ContatoreIncremento")
     INCREMENT_PERCENTAGE  = x.get("PercentualeIncremento")
     LOSS_COUNTER = x.get("ContatorePerdita")
-    LOSS_PERCENTAGE  = x.get("PercentualePerdita")
+    TO_IGNORE = x.get("DaIgnorare")
 
 ############################################################################################################################################
 def doRequest(endpoint,guardiaFirstSend=True):
@@ -70,23 +70,34 @@ def loadJSON(path):
 def sendAlert(notificationMessage):
     try:
         if(len(notificationMessage)>0):
-            str = '<b> BINANCE ALERT </b> %0A%0A'
+            # str = '<b> BINANCE ALERT </b> %0A%0A'
+            str = ''
             for i in notificationMessage:
-                symbol= i.get("symbol")
-                increment = round(i.get("increment"),2)
-                price = i.get("price")
-                new_time= convertUnix2HumanTime(i.get("time"))
-                old_time= convertUnix2HumanTime(i.get("old_time"))
+                data = i.get("cur")
+                print(data)
+                if(i.get("flag")==0):
+                    symbol = "PERDITA: "+ data.get("symbol")#loosing
+                else:
+                    symbol = "%2B%2B" + data.get("symbol")
+
+
+                increment = data.get("INCREMENT_COUNTER")
+                decrement = data.get("LOSS_COUNTER")
+                price = data.get("price")
+                new_time= convertUnix2HumanTime(data.get("time"))
 
                 # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
                 str += "<b>"+symbol + "</b>  " #senza URL
-                str += " - increment: " + format(increment)
-                str += " - price: " + format(price)
-                str += " ||  " + format(old_time) + " - " + format(new_time)
+                str += "<b>"+str(price) + "</b>  " #senza URL
+                str += " - UP: " + format(increment)
+                str += " - DOWN: " + format(decrement)
+                str += " || " + format(new_time)
                 str +="%0A" # \n
             
+
             telegramTalker.sendMessage(TELEGRAM_TOKEN,str)
     except Exception as e:
+        print(e)
         pass
 
 
@@ -119,7 +130,8 @@ def compareRegisters(actual):
                             if(dummy_LossCounter>LOSS_COUNTER): ##OPTIONALE: SENTI ANDREA
                                 dummy_LossCounter=dummy_LossCounter/2 # chef kiss again (if one is loosing a lot, then start growing up, we lower the counter)
                     elif(dummy_IncrementCounter>= INCREMENT_COUNTER ): ## and percentageIncrement<INCREMENT_PERCENTAGE is implicit # "up" the LOSS counter - if has grown in the past otherwise is already decreasing
-                            dummy_IncrementCounter = INCREMENT_PERCENTAGE-1 # chef kiss (the top which we notify minus one)
+                            print("LOOSING: ", symbol,( dummy_LossCounter+1))
+                            dummy_IncrementCounter = INCREMENT_PERCENTAGE/2 # chef kiss (the top which we notify minus one)
                             dummy_LossCounter = dummy_LossCounter + 1
 
                     REGISTER_GLOBAL[indx] = {"symbol":symbol,"time": getUnixtime(), "price":new_price, "increment":percentageIncrement, "INCREMENT_COUNTER": dummy_IncrementCounter, "LOSS_COUNTER":dummy_LossCounter}
@@ -136,6 +148,11 @@ def start():
         actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDT
         #print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
+        ## ADDED LATELY: removing unwanted symbols
+        for x in actual_register:
+            if(x.get("symbol") in TO_IGNORE):
+                actual_register.remove(x)
+
         actual_timestamp = getUnixtime()
 
         ## baptize the set with a timestamp
@@ -143,6 +160,7 @@ def start():
             i.update({"time": actual_timestamp})
             i.update({"INCREMENT_COUNTER": 0}) # init
             i.update({"LOSS_COUNTER": 0}) # init
+
 
         global REGISTER_GLOBAL
         if(not REGISTER_GLOBAL): #empty list of last value, set the actual
@@ -167,16 +185,16 @@ def start():
             ## now we tell if is in loss or in grow --> checking the counter
             if(i.get("INCREMENT_COUNTER")==INCREMENT_COUNTER):
                 print("++ SALITA\t", i.get("symbol"), i.get("increment"))
-                notificationMessage.append(i)
+                notificationMessage.append({"cur": i, "flag": 1})
             if(i.get("LOSS_COUNTER")==LOSS_COUNTER):
                 print("--- PERDITA\t", i.get("symbol"), i.get("increment"))
-                notificationMessage.append(i)
+                notificationMessage.append({"cur": i, "flag": 0})
 
-
+        # notificationMessage.sort(key=lambda x: x["flag"], reverse=True)
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
-        print("...................\n\n\n")
+        # print("...................\n\n\n")
 
 
 #############################################################################
