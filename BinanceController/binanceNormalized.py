@@ -82,7 +82,7 @@ def sendAlert(notificationMessage):
                 increment = round(data.get("increment"),2)
                 decrement = data.get("LOSS_COUNTER")
                 price = data.get("price")
-                # print(symbol, price, increment, str(data.get("INCREMENT_COUNTER")))
+                
 
                 new_time= convertUnix2HumanTime(data.get("time"))
 
@@ -96,7 +96,9 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(new_time) +" \n"
                 # strTMP +="\%0A" # \n
-            
+
+                print(strTMP)
+
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -203,6 +205,8 @@ def start():
 
         sendAlert(notificationMessage)
 
+
+        # TODO: remove in production
         time.sleep(SLEEP_TIME)
         counter+=1
         if(counter>20000):
