@@ -70,7 +70,6 @@ def loadJSON(path):
 def sendAlert(notificationMessage):
     try:
         if(len(notificationMessage)>0):
-            # str = '<b> BINANCE ALERT </b> %0A%0A'
             strTMP = ''
             for i in notificationMessage:
                 data = i.get("cur")
@@ -80,21 +79,16 @@ def sendAlert(notificationMessage):
                     symbol = "🟢 " + data.get("symbol")
 
                 increment = round(data.get("increment"),2)
-                decrement = data.get("LOSS_COUNTER")
-                price = data.get("price")
 
-                new_time= convertUnix2HumanTime(data.get("time"))
-
-                # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
                 strTMP += "<b>"+symbol + "</b>  " #senza URL
-                strTMP += str(price)   #senza URL
+                strTMP += str(data.get("price"))   #senza URL
                 if(i.get("flag")==0):
-                    strTMP += " // "+str(data.get("prezzoAlto")) + "  <b>" + format(increment)+"%</b> "
+                    strTMP += " // "+str(data.get("max_price")) + "  <b>" + format(increment)+"%</b> "
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
-                strTMP += " || " + format(new_time) +" \n"
-                # strTMP +="\%0A" # \n
+
+                strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
                 print(strTMP)
 
@@ -116,47 +110,40 @@ def compareRegisters(actual):
             for j in actual:
                 symbol = i.get("symbol")
                 if(symbol==j.get("symbol")): ## if the same check the prices
-                    old_price = float(i.get("price"))
                     new_price = float(j.get("price"))
-                    prezzoAlto = 0
-                    try:
-                        prezzoAlto = float(i.get("prezzoAlto"))
-                    except:
-                        pass
-                    prezzoAlto = max(prezzoAlto,new_price)
+
+                    max_price=0
+                    if(i.get("max_price")==None):
+                        max_price=float(i.get("price"))
+                    else:
+                        max_price=float(i.get("max_price"))
 
                     percentageIncrement=0
                     try:
-                        percentageIncrement = (new_price-prezzoAlto)/ prezzoAlto * 100
+                        percentageIncrement = (new_price-max_price)/ max_price * 100
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
                     
-
                     incrementCounter = int(i.get("INCREMENT_COUNTER"))
-                    toNotify= False
                     verse=0
                     if(percentageIncrement>=INCREMENT_PERCENTAGE ): # Up the increment counter - currency is growning
                         incrementCounter += 1 #if up, increment the counter
+                        max_price=new_price
                     elif(incrementCounter>=INCREMENT_COUNTER and abs(percentageIncrement)>=LOSS_PERCENTAGE): # loosing 
-                        toNotify=True
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
+                        max_price=None #TODO: CHIEDERE AD ANDREA
                     
-                    # if(incrementCounter%INCREMENT_COUNTER==0 and incrementCounter>0 and percentageIncrement>0): 
                     if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): 
-                        toNotify=True
                         verse=1
 
                     REGISTER_GLOBAL[indx] = {
-                        "prezzoAlto": prezzoAlto,
                         "symbol":symbol,
                         "time": getUnixtime(),
                         "price":new_price, 
-                        "priceAlto":new_price, 
+                        "max_price":max_price, 
                         "increment":percentageIncrement,
                         "INCREMENT_COUNTER": incrementCounter,
-                        "toNotify": toNotify,
-                        "old_price": old_price,
                         "verse": verse
                     }
 
@@ -205,22 +192,13 @@ def start():
         # ##########################################################################################
         notificationMessage = list()
         for i in REGISTER_GLOBAL:
-            if(i.get("toNotify")):
-                if(i.get("verse")>0):
-                    notificationMessage.append({"cur": i, "flag": 1})
-                else:
-                    notificationMessage.append({"cur": i, "flag": 0})
+            dummyverse= i.get("verse")
+            if(dummyverse==1): #to notify and positive
+                notificationMessage.append({"cur": i, "flag": 1})
+            elif(dummyverse==-1): #to notify and loss
+                notificationMessage.append({"cur": i, "flag": 0})
 
         sendAlert(notificationMessage)
-
-
-        # TODO: remove in production
-        time.sleep(SLEEP_TIME)
-        counter+=1
-        if(counter>20000):
-            break
-            
-        # print("...................\n\n\n")
 
 
 #############################################################################
