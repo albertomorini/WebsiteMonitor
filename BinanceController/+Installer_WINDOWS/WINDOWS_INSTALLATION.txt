@@ -1,0 +1,14 @@
+1) 
+C:\Users\lenovo\AppData\Local\Programs\Python\Python36
+
+2)
+C:\Users\lenovo\AppData\Local\Programs\Python\Python36\Scripts\pip
+
+
+
+powershell in admin mode:
+	- python -m pip install --upgrade pywin32
+	- pip install requests
+
+python installer.py
+
