@@ -158,7 +158,7 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x: (x.get('symbol').find('USDC')) != -1), actual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDC
         #print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
