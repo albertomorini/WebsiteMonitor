@@ -7,6 +7,7 @@ import hashlib ## just for testing
 import sys
 
 BASE_URI = 'https://api.binance.com/api/v3/'
+BASE_URI_CONVERT = "https://www.binance.com/en/convert/"
 MODE = None
 
 TELEGRAM_TOKEN = ''
@@ -73,11 +74,14 @@ def sendAlert(notificationMessage):
             strTMP = ''
             for i in notificationMessage:
                 data = i.get("cur")
-                print(data)
+                
+                indexUSD = data.get("symbol").index("USD")
+                
                 if(i.get("flag")==0):
-                    symbol = "🟥 "+ data.get("symbol")#loosing
+                    symbol = "🟥 <a href='"+ (BASE_URI_CONVERT + data.get("symbol")[0:indexUSD] + "/" +data.get("symbol")[indexUSD:len(data.get("symbol"))]  ) + ">"  + data.get("symbol") +"</a>"
                 else:
-                    symbol = "🟢 " + data.get("symbol")
+                    symbol = "🟢  <a href='"+ (BASE_URI_CONVERT + data.get("symbol")[indexUSD:len(data.get("symbol"))] + "/"  + data.get("symbol")[0:indexUSD]   ) + ">" + data.get("symbol") +"</a>"
+                
 
                 increment = round(data.get("increment"),2)
 
@@ -88,19 +92,16 @@ def sendAlert(notificationMessage):
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
-
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-                # print(strTMP)
+                print(strTMP)
 
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
-        pass
-
+        
 
 ############################################################################################################################################
-
 
 
 # compare the actual slot of data, with last notified data
@@ -158,8 +159,8 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x: (x.get('symbol').find('USDT')) != -1), actual_register)) ## filter only the currency with USDC
-        #print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 ), actual_register)) ## filter only the currency with USDC
+        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:
@@ -198,7 +199,12 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 1})
             elif(dummyverse==-1): #to notify and loss
                 notificationMessage.append({"cur": i, "flag": 0})
-
+        
+        if(len(notificationMessage)==0):
+            print("Attendi... conteggio in corso")
+        else:
+            print("Messaggio inviato")
+        print("................................................")
         sendAlert(notificationMessage)
 
 

@@ -45,4 +45,4 @@ def sendMessage(token,message,guardiaFirstSend=True):
             pass
 
 
-# print(getAllSubscribed("7716948042:AAEzTwh_SzMfjysg-ptxm8GN7EoaHf1haJU"))
+# print(getAllSubscribed("$API_TOKEN"))
