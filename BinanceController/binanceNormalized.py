@@ -75,18 +75,22 @@ def sendAlert(notificationMessage):
             for i in notificationMessage:
                 data = i.get("cur")
                 
-                indexUSD = data.get("symbol").index("USD")
+                dummy_symbol=data.get("symbol")
+                indexUSD = dummy_symbol.index("USD")
                 
                 if(i.get("flag")==0):
-                    symbol = "🟥 <a href='"+ (BASE_URI_CONVERT + data.get("symbol")[0:indexUSD] + "/" +data.get("symbol")[indexUSD:len(data.get("symbol"))]  ) + ">"  + data.get("symbol") +"</a>"
+                    symbol = "🟥"
+                    symbol += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
+                    symbol += "'>"+dummy_symbol+"</a></b>"
                 else:
-                    symbol = "🟢  <a href='"+ (BASE_URI_CONVERT + data.get("symbol")[indexUSD:len(data.get("symbol"))] + "/"  + data.get("symbol")[0:indexUSD]   ) + ">" + data.get("symbol") +"</a>"
-                
+                    symbol = "🟢"
+                    symbol += "<b><a href='"+(BASE_URI_CONVERT + dummy_symbol[indexUSD:len(dummy_symbol)] + "/" +  dummy_symbol[0:indexUSD])
+                    symbol += "'>"+dummy_symbol+"</a></b>"
 
                 increment = round(data.get("increment"),2)
 
-                strTMP += "<b>"+symbol + "</b>  " #senza URL
-                strTMP += str(data.get("price"))   #senza URL
+                strTMP += symbol 
+                strTMP += str(data.get("price"))  
                 if(i.get("flag")==0):
                     strTMP += " // "+str(data.get("max_price")) + "  <b>" + format(increment)+"%</b> "
                 else:
@@ -94,8 +98,8 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-                print(strTMP)
 
+            print(TELEGRAM_TOKEN,strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -201,7 +205,7 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 0})
         
         if(len(notificationMessage)==0):
-            print("Attendi... conteggio in corso")
+            print("Attendi...")
         else:
             print("Messaggio inviato")
         print("................................................")

@@ -13,17 +13,15 @@ BASE_URI="https://api.telegram.org/bot"
 def getAllSubscribed(token):
     URL = BASE_URI+token+"/getUpdates"
     res = requests.get(URL).json()
-    # print(res)
     ids = list()
     for chatId in res.get("result"):
         try:
             ids.append(chatId.get("message").get("from").get("id"))
         except Exception:
-            print("Nessun utente iscritto al bot")
-            return []
+            # print("Nessun utente iscritto al bot")
+            pass
     
     return ids
-
 
 def sendMessage(token,message,guardiaFirstSend=True):
     # chat_ids = set(getAllSubscribed(token))
@@ -32,9 +30,19 @@ def sendMessage(token,message,guardiaFirstSend=True):
         chat_ids = ["49797109", "6406710754"]
         for id in chat_ids:
             try:
-                url = BASE_URI+token+f"/sendMessage?chat_id={id}&text={message}&parse_mode=HTML"
-                resp = requests.get(url).json() # this sends the message
-            except Exception:
+                mydata={
+                    "chat_id": id,
+                    "text" : message,
+                    "parse_mode": "HTML",
+                    "link_preview_options":{
+                        "is_disabled":True
+                    }
+                }
+                headers = {'Authorization': f'Bearer {token}'}
+                resp = requests.post(BASE_URI+token+"/sendMessage",json=mydata,headers=headers).json() # this sends the message
+                print(resp)
+            except Exception as e:
+                print(e)
                 pass
     except Exception as e:
         print("ERRORE MESSAGGIO TELEGRAM: " + str(e))
@@ -45,4 +53,5 @@ def sendMessage(token,message,guardiaFirstSend=True):
             pass
 
 
-# print(getAllSubscribed("$API_TOKEN"))
+# print(getAllSubscribed("token"))
+# sendMessage("token","test2")
