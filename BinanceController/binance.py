@@ -119,7 +119,7 @@ def start():
     
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x: (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 )), a ctual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 ), actual_register)) ## filter only the currency with USDC
 
         actual_timestamp = getUnixtime()
         ## baptize the set with a timestamp
