@@ -7,6 +7,7 @@ import hashlib ## just for testing
 import sys
 
 BASE_URI = 'https://api.binance.com/api/v3/'
+BASE_URI_CONVERT = "https://www.binance.com/en/convert/"
 MODE = None
 
 PERCENTAGE_ALERT = 2
@@ -93,22 +94,26 @@ def compareRegisters(actual):
 def sendAlert(notificationMessage):
     try:
         if(len(notificationMessage)>0):
-            str = '<b> BINANCE ALERT </b> %0A%0A'
+            str = '<b> BINANCE ALERT </b> \n'
             for i in notificationMessage:
-                symbol= i.get("symbol")
+
+                dummy_symbol= i.get("symbol")
+                indexUSD = dummy_symbol.index("USD")
                 increment = round(i.get("increment"),2)
                 price = i.get("price")
                 new_time= convertUnix2HumanTime(i.get("time"))
                 old_time= convertUnix2HumanTime(i.get("old_time"))
 
-                # str += "<b><a href='https://www.binance.com/en/trade/"+symbol+"?type=spot'>"+symbol + "</a></b>  " #con URL
-                str += "<b>"+symbol + "</b>  " #senza URL
+                str += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
+                str += "'>"+dummy_symbol+"</a></b>"
+                # str += "<b>"+dummy_symbol + "</b>  " #senza URL
+                
                 str += " - increment: " + format(increment)
                 str += " - price: " + format(price)
                 str += " ||  " + format(old_time) + " - " + format(new_time)
-                str +="%0A" # \n
+                str += "\n" #"%0A" # \n
                 
-            # print(str)
+            print(str)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,str)
     except Exception as e:
         pass
