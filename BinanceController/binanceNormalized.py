@@ -76,7 +76,10 @@ def sendAlert(notificationMessage):
                 data = i.get("cur")
                 
                 dummy_symbol=data.get("symbol")
-                indexUSD = dummy_symbol.index("USD")
+                try:
+                    indexUSD = dummy_symbol.index("USD")
+                except Exception:
+                    indexUSD = dummy_symbol.index("BTC")
                 
                 if(i.get("flag")==0):
                     symbol = "🟥"
@@ -163,7 +166,7 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol').find('BTC')) != -1 ), actual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
