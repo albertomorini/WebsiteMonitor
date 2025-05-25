@@ -105,8 +105,7 @@ def sendAlert(notificationMessage):
                 old_time= convertUnix2HumanTime(i.get("old_time"))
 
                 str += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
-                str += "'>"+dummy_symbol+"</a></b>"
-                # str += "<b>"+dummy_symbol + "</b>  " #senza URL
+                str += "'>"+dummy_symbol+"</a></b> "
                 
                 str += " - increment: " + format(increment)
                 str += " - price: " + format(price)
@@ -124,7 +123,7 @@ def start():
     
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 ), actual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('BTC')) or (x.get('symbol').find('USDT')) != -1  ), actual_register)) ## filter only the currency with USDC
 
         actual_timestamp = getUnixtime()
         ## baptize the set with a timestamp

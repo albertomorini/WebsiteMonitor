@@ -76,13 +76,18 @@ def sendAlert(notificationMessage):
                 data = i.get("cur")
                 
                 dummy_symbol=data.get("symbol")
-                indexUSD = dummy_symbol.index("USD")
+                try:
+                    indexUSD = dummy_symbol.index("USD")
+                except Exception:
+                    indexUSD = dummy_symbol.index("BTC")
                 
                 if(i.get("flag")==0):
+                    print("🟥",data.get("symbol"), round(data.get("increment"),2))
                     symbol = "🟥"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
                     symbol += "'>"+dummy_symbol+"</a></b> "
                 else:
+                    print("🟢",data.get("symbol"), round(data.get("increment"),2))
                     symbol = "🟢"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT + dummy_symbol[indexUSD:len(dummy_symbol)] + "/" +  dummy_symbol[0:indexUSD])
                     symbol += "'>"+dummy_symbol+"</a></b> "
@@ -98,8 +103,6 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-
-            print(TELEGRAM_TOKEN,strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -135,12 +138,10 @@ def compareRegisters(actual):
                         incrementCounter += 1 #if up, increment the counter
                         max_price=new_price
                     elif(incrementCounter>=INCREMENT_COUNTER and  -1*percentageIncrement>=LOSS_PERCENTAGE): # loosing 
-                        print(percentageIncrement)
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
-                        #max_price=None #TODO: CHIEDERE AD ANDREA
                     
-                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): 
+                    if(incrementCounter>0 and (incrementCounter%INCREMENT_COUNTER==0) and percentageIncrement>=INCREMENT_PERCENTAGE): 
                         verse=1
 
                     REGISTER_GLOBAL[indx] = {
@@ -163,7 +164,8 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol').find('BTC')) != -1 ), actual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
+
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
@@ -204,10 +206,6 @@ def start():
             elif(dummyverse==-1): #to notify and loss
                 notificationMessage.append({"cur": i, "flag": 0})
         
-        if(len(notificationMessage)==0):
-            print("Attendi...")
-        else:
-            print("Messaggio inviato")
         print("................................................")
         sendAlert(notificationMessage)
 
@@ -216,3 +214,4 @@ def start():
 
 loadConfig()
 start()
+
