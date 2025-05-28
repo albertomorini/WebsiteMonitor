@@ -39,7 +39,7 @@ def loadConfig():
     TO_IGNORE = x.get("DaIgnorare")
 
 ############################################################################################################################################
-def doRequest(endpoint,guardiaFirstSend=True):
+def doRequest(endpoint):
     try:
         res = requests.get(BASE_URI+endpoint)
         if (res.status_code==200):
@@ -48,9 +48,9 @@ def doRequest(endpoint,guardiaFirstSend=True):
             return null
     except Exception:
         print("ERRORE fetching sito")
-        if(guardiaFirstSend):
-            time.sleep(5)
-            doRequest(endpoint,False)
+        # if(guardiaFirstSend):
+        #     time.sleep(5)
+        #     doRequest(endpoint,False)
 
 def getUnixtime():
     return (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
