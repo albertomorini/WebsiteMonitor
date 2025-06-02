@@ -45,6 +45,7 @@ def doRequest(endpoint):
             return null
     except Exception:
         print("ERRORE fetching sito")
+        return []
         # if(guardiaFirstSend):
         #     time.sleep(5)
         #     doRequest(endpoint,False)
