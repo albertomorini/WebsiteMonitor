@@ -48,6 +48,7 @@ def doRequest(endpoint):
             return null
     except Exception:
         print("ERRORE fetching sito")
+        return []
         # time.sleep(5)
         # doRequest(endpoint)
 
