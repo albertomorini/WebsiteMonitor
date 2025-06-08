@@ -99,7 +99,11 @@ def sendAlert(notificationMessage):
             for i in notificationMessage:
 
                 dummy_symbol= i.get("symbol")
-                indexUSD = dummy_symbol.index("USD")
+                try:
+                    indexUSD = dummy_symbol.index("USD")
+                except Exception:
+                    indexUSD = dummy_symbol.index("BTC")
+                    
                 increment = round(i.get("increment"),2)
                 price = i.get("price")
                 new_time= convertUnix2HumanTime(i.get("time"))

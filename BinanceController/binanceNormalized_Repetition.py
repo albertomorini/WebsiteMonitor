@@ -205,9 +205,15 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 1})
             elif(dummyverse==-1): #to notify and loss
                 notificationMessage.append({"cur": i, "flag": 0})
-        
+          
+        if(len(notificationMessage)==0):
+            print("Attendi...")
+        else:
+            print("Messaggio inviato")
         print("................................................")
         sendAlert(notificationMessage)
+
+        time.sleep(SLEEP_TIME)
 
 
 #############################################################################
