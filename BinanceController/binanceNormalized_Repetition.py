@@ -134,13 +134,15 @@ def compareRegisters(actual):
                     
                     incrementCounter = int(i.get("INCREMENT_COUNTER"))
                     verse=0
-                    if(percentageIncrement>=INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning
+                    if(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning #TODO: solo maggiore
                         incrementCounter += 1 #if up, increment the counter
                         max_price=new_price
                     elif(incrementCounter>=INCREMENT_COUNTER and  -1*percentageIncrement>=LOSS_PERCENTAGE): # loosing 
                         verse=-1
                         incrementCounter = 0 # stop grow then, reset the counter
-                    
+                        maxPrice=None
+                        #TODO: maxPrice = ;;;
+
                     if(incrementCounter>0 and (incrementCounter%INCREMENT_COUNTER==0) and percentageIncrement>=INCREMENT_PERCENTAGE): 
                         verse=1
 
@@ -164,7 +166,8 @@ def start():
     counter = 0
     while True:
         actual_register = doRequest("ticker/price")
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
+        # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
+        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
