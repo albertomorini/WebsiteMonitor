@@ -15,6 +15,7 @@ SLEEP_TIME = 120 # 2 min
 INCREMENT_COUNTER = -1
 INCREMENT_PERCENTAGE = -1
 LOSS_PERCENTAGE = -1
+EQUAL_COUNTER = -1
 
 TO_IGNORE = []
 
@@ -28,6 +29,7 @@ def loadConfig():
     global INCREMENT_PERCENTAGE
     global LOSS_PERCENTAGE
     global TO_IGNORE
+    global EQUAL_COUNTER
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -37,6 +39,7 @@ def loadConfig():
     INCREMENT_PERCENTAGE  = x.get("PercentualeIncremento")
     LOSS_PERCENTAGE = x.get("PercentualePerdita")
     TO_IGNORE = x.get("DaIgnorare")
+    EQUAL_COUNTER = x.get("ContatoreUguale")
 
 ############################################################################################################################################
 def doRequest(endpoint):
@@ -97,13 +100,14 @@ def sendAlert(notificationMessage):
                 strTMP += symbol 
                 strTMP += str(data.get("price"))  
                 if(i.get("flag")==0):
-                    strTMP += " // "+str(data.get("max_price")) + "  <b>" + format(increment)+"%</b> "
+                    strTMP += " // "+str(data.get("historyMaxPrice")) +"("+ str(data.get("historyPurchasing")) +")  <b>" + format(increment)+"%</b> "
                 else:
                     strTMP += "  <i>" + format(increment)+"%</i>"
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
+            print(strTMP)
+            # telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
         
@@ -128,32 +132,67 @@ def compareRegisters(actual):
 
                     percentageIncrement=0
                     try:
-                        percentageIncrement = ((new_price-max_price)/ max_price) * 100
+                        percentageIncrement = ((new_price-max_price)/ max_price) * 100 ## MAX_PRICE aka prezzo alto
                     except Exception as e:
                         percentageIncrement = 0 #ignoring the division by 0
-                    
-                    incrementCounter = int(i.get("INCREMENT_COUNTER"))
-                    verse=0
-                    if(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning #TODO: solo maggiore
-                        incrementCounter += 1 #if up, increment the counter
-                        max_price=new_price
-                    elif(incrementCounter>=INCREMENT_COUNTER and  -1*percentageIncrement>=LOSS_PERCENTAGE): # loosing 
-                        verse=-1
-                        incrementCounter = 0 # stop grow then, reset the counter
-                        maxPrice=None
-                        #TODO: maxPrice = ;;;
 
+                    #############################~#############################~#############################    
+                    incrementCounter = int(i.get("INCREMENT_COUNTER"))
+                    equal_counter = int(i.get("equal_counter"))
+                    isPurchased = i.get("isPurchased")
+
+                    notifyExchange=0
+
+                    historyMaxPrice = i.get("historyMaxPrice")
+                    historyPurchasing = i.get("historyPurchasing")
+
+                    if(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
+                        incrementCounter += 1 #if up, increment the counter -- contatore notifica
+                        max_price=new_price ## update max_price
+                        historyMaxPrice=new_price
+                        equal_counter = 0
+                    elif(new_price>max_price and percentageIncrement<=INCREMENT_PERCENTAGE): ## case 2 
+                        max_price=new_price ## update max_price
+                        historyMaxPrice=new_price
+                        equal_counter = 0
+                    elif(new_price==max_price): ##EQUAL no increment, no loss
+                        equal_counter += 1
+                    elif((1*percentageIncrement>=LOSS_PERCENTAGE or equal_counter==EQUAL_COUNTER) and isPurchased): ## case 4, in this case we sell the purchased symbol
+                        
+                        if(equal_counter==EQUAL_COUNTER):
+                            print("VENDO: ", symbol, " - causa contatore uguale")
+                        else:
+                            print("VENDO: ", symbol, " - causa percentuale increment minore")
+
+                        notifyExchange=-1
+                        max_price=None
+                        incrementCounter=0
+                        equal_counter=0
+                        isPurchased=False
+                    elif(new_price<max_price and isPurchased):
+                        incrementCounter=0
+                        equal_counter+=1
+
+                    ## Notifying
                     if(incrementCounter>0 and (incrementCounter%INCREMENT_COUNTER==0) and percentageIncrement>=INCREMENT_PERCENTAGE): 
-                        verse=1
+                        notifyExchange=1
+                        isPurchased=True
+                        historyPurchasing=new_price
+                
 
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
                         "time": getUnixtime(),
                         "price":new_price, 
+                        "equal_counter": equal_counter,
                         "max_price":max_price, 
                         "increment":percentageIncrement,
                         "INCREMENT_COUNTER": incrementCounter,
-                        "verse": verse
+                        "notifyExchange": notifyExchange,
+                        "isPurchased": isPurchased,
+                        "historyMaxPrice": historyMaxPrice,
+                        "historyPurchasing": historyPurchasing
+
                     }
 
     except Exception as e:
@@ -169,7 +208,7 @@ def start():
         # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
         actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
 
-        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+        # print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:
@@ -181,7 +220,7 @@ def start():
         ## baptize the set with a timestamp
         for i in actual_register:
             i.update({"time": actual_timestamp})
-            i.update({"INCREMENT_COUNTER": 0}) # init
+            i.update({"INCREMENT_COUNTER": 0, "equal_counter":0}) # init
 
 
         global REGISTER_GLOBAL
@@ -203,17 +242,18 @@ def start():
         # ##########################################################################################
         notificationMessage = list()
         for i in REGISTER_GLOBAL:
-            dummyverse= i.get("verse")
-            if(dummyverse==1): #to notify and positive
+            dummyverse= i.get("notifyExchange")
+            if(dummyverse==1): #to notify with profit
                 notificationMessage.append({"cur": i, "flag": 1})
-            elif(dummyverse==-1): #to notify and loss
+            elif(dummyverse==-1): #to notify with loss
                 notificationMessage.append({"cur": i, "flag": 0})
           
         if(len(notificationMessage)==0):
-            print("Attendi...")
+            # print("Attendi...")
+            pass
         else:
             print("Messaggio inviato")
-        print("................................................")
+        # print("................................................")
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
