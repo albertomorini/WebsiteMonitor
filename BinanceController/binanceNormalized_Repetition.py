@@ -106,8 +106,8 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            print(strTMP)
-            # telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
+            # print(strTMP)
+            telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
         
@@ -208,7 +208,7 @@ def start():
         # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
         actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
 
-        # print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:
@@ -249,11 +249,11 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 0})
           
         if(len(notificationMessage)==0):
-            # print("Attendi...")
+            print("Attendi...")
             pass
         else:
             print("Messaggio inviato")
-        # print("................................................")
+        print("................................................")
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
