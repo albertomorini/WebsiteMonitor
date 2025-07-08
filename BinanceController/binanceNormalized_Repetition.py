@@ -152,8 +152,8 @@ def compareRegisters(actual):
                         historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price>max_price and percentageIncrement<=INCREMENT_PERCENTAGE): ## case 2 
-                        max_price=new_price ## update max_price
-                        historyMaxPrice=new_price
+                        ## max_price=new_price ## update max_price
+                        ## historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price==max_price): ##EQUAL no increment, no loss
                         equal_counter += 1
@@ -176,6 +176,7 @@ def compareRegisters(actual):
                     ## Notifying
                     if(incrementCounter>0 and (incrementCounter%INCREMENT_COUNTER==0) and percentageIncrement>=INCREMENT_PERCENTAGE): 
                         notifyExchange=1
+                        equal_counter=0
                         isPurchased=True
                         historyPurchasing=new_price
                 
