@@ -106,7 +106,7 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            # print(strTMP)
+            print(strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -157,7 +157,8 @@ def compareRegisters(actual):
                         equal_counter = 0
                     elif(new_price==max_price): ##EQUAL no increment, no loss
                         equal_counter += 1
-                    elif((1*percentageIncrement>=LOSS_PERCENTAGE or equal_counter==EQUAL_COUNTER) and isPurchased): ## case 4, in this case we sell the purchased symbol
+                    
+                    if((1*percentageIncrement>=LOSS_PERCENTAGE or equal_counter==EQUAL_COUNTER) and isPurchased): ## case 4, in this case we sell the purchased symbol
                         
                         if(equal_counter==EQUAL_COUNTER):
                             print("VENDO: ", symbol, " - causa contatore uguale")
@@ -174,7 +175,7 @@ def compareRegisters(actual):
                         equal_counter+=1
 
                     ## Notifying
-                    if(incrementCounter>0 and incrementCounter==INCREMENT_COUNTER==0 and percentageIncrement>=INCREMENT_PERCENTAGE and not isPurchased): 
+                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE and not isPurchased): 
                         notifyExchange=1
                         equal_counter=0
                         isPurchased=True
