@@ -83,19 +83,23 @@ def sendAlert(notificationMessage):
                     indexUSD = dummy_symbol.index("USD")
                 except Exception:
                     indexUSD = dummy_symbol.index("BTC")
-                
+
+
+                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("price"))/100, 5)
+
+
                 if(i.get("flag")==0):
-                    print("🟥",data.get("symbol"), round(data.get("increment"),2))
+                    print("🟥",data.get("symbol"),str(increment))
                     symbol = "🟥"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
                     symbol += "'>"+dummy_symbol+"</a></b> "
                 else:
-                    print("🟢",data.get("symbol"), round(data.get("increment"),2))
+                    print("🟢",data.get("symbol"), str(increment))
                     symbol = "🟢"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT + dummy_symbol[indexUSD:len(dummy_symbol)] + "/" +  dummy_symbol[0:indexUSD])
                     symbol += "'>"+dummy_symbol+"</a></b> "
 
-                increment = round(data.get("increment"),2)
+                # increment = round(data.get("increment"),2)
 
                 strTMP += symbol 
                 strTMP += str(data.get("price"))  
@@ -106,8 +110,8 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            # print(strTMP)
-            telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
+            print(strTMP)
+            # telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
         
@@ -152,18 +156,16 @@ def compareRegisters(actual):
                         historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price>max_price and percentageIncrement<=INCREMENT_PERCENTAGE): ## case 2 
-                        ## max_price=new_price ## update max_price
-                        ## historyMaxPrice=new_price
+                        incrementCounter=0
+                        max_price=new_price ## update max_price
+                        historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price==max_price): ##EQUAL no increment, no loss
                         equal_counter += 1
+                        incrementCounter=0
                     
-                    if((1*percentageIncrement>=LOSS_PERCENTAGE or equal_counter==EQUAL_COUNTER) and isPurchased): ## case 4, in this case we sell the purchased symbol
-                        
-                        if(equal_counter==EQUAL_COUNTER):
-                            print("VENDO: ", symbol, " - causa contatore uguale")
-                        else:
-                            print("VENDO: ", symbol, " - causa percentuale increment minore")
+                    if((1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
+                        print("VENDO: ", symbol, " - causa percentuale increment minore") 
 
                         notifyExchange=-1
                         max_price=None
@@ -174,13 +176,22 @@ def compareRegisters(actual):
                         incrementCounter=0
                         equal_counter+=1
 
+
+
                     ## Notifying
-                    if(incrementCounter>0 and (incrementCounter%INCREMENT_COUNTER==0) and percentageIncrement>=INCREMENT_PERCENTAGE): 
+                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): #OUTCOME::BUY
                         notifyExchange=1
                         equal_counter=0
                         isPurchased=True
                         historyPurchasing=new_price
-                
+                    elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
+                        print("VENDO: ", symbol, " - causa contatore UGUALE PER "+str(equal_counter)+" VOLTE") 
+
+                        notifyExchange=-1
+                        max_price=None
+                        incrementCounter=0
+                        equal_counter=0
+                        isPurchased=False
 
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
