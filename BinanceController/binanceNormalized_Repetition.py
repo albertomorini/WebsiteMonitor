@@ -85,21 +85,20 @@ def sendAlert(notificationMessage):
                     indexUSD = dummy_symbol.index("BTC")
 
 
-                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("price"))/100, 5)
+                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("price")*100), 2)
 
 
                 if(i.get("flag")==0):
                     print("🟥",data.get("symbol"),str(increment))
                     symbol = "🟥"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT +  dummy_symbol[0:indexUSD] + "/" +dummy_symbol[indexUSD:len(dummy_symbol)])
-                    symbol += "'>"+dummy_symbol+"</a></b> "
+                    symbol += "'>"+dummy_symbol+"</a></b> " + data.get("sell_cause")+ "  "
                 else:
                     print("🟢",data.get("symbol"), str(increment))
                     symbol = "🟢"
                     symbol += "<b><a href='"+(BASE_URI_CONVERT + dummy_symbol[indexUSD:len(dummy_symbol)] + "/" +  dummy_symbol[0:indexUSD])
                     symbol += "'>"+dummy_symbol+"</a></b> "
 
-                # increment = round(data.get("increment"),2)
 
                 strTMP += symbol 
                 strTMP += str(data.get("price"))  
@@ -111,7 +110,7 @@ def sendAlert(notificationMessage):
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
             print(strTMP)
-            # telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
+            telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
         
@@ -150,6 +149,8 @@ def compareRegisters(actual):
                     historyMaxPrice = i.get("historyMaxPrice")
                     historyPurchasing = i.get("historyPurchasing")
 
+                    sell_cause = None
+
                     if(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
@@ -164,7 +165,7 @@ def compareRegisters(actual):
                         equal_counter += 1
                         incrementCounter=0
                     
-                    if((1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
+                    elif((-1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa percentuale increment minore") 
 
                         notifyExchange=-1
@@ -172,6 +173,9 @@ def compareRegisters(actual):
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
+
+                        sell_cause="Perc"
+
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
@@ -179,13 +183,16 @@ def compareRegisters(actual):
 
 
                     ## Notifying
-                    if(incrementCounter==INCREMENT_COUNTER and percentageIncrement>=INCREMENT_PERCENTAGE): #OUTCOME::BUY
+                    if(incrementCounter==INCREMENT_COUNTER ): #OUTCOME::BUY
                         notifyExchange=1
                         equal_counter=0
                         isPurchased=True
+                        incrementCounter=0
                         historyPurchasing=new_price
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa contatore UGUALE PER "+str(equal_counter)+" VOLTE") 
+                        
+                        sell_cause="Ugual"
 
                         notifyExchange=-1
                         max_price=None
@@ -196,6 +203,7 @@ def compareRegisters(actual):
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
                         "time": getUnixtime(),
+                        "sell_cause": sell_cause,
                         "price":new_price, 
                         "equal_counter": equal_counter,
                         "max_price":max_price, 
@@ -205,7 +213,6 @@ def compareRegisters(actual):
                         "isPurchased": isPurchased,
                         "historyMaxPrice": historyMaxPrice,
                         "historyPurchasing": historyPurchasing
-
                     }
 
     except Exception as e:
