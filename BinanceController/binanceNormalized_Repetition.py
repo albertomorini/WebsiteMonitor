@@ -17,6 +17,8 @@ INCREMENT_PERCENTAGE = -1
 LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
+SELLING_PERCENTAGE = -1
+
 TO_IGNORE = []
 
 REGISTER_GLOBAL = list()
@@ -30,6 +32,7 @@ def loadConfig():
     global LOSS_PERCENTAGE
     global TO_IGNORE
     global EQUAL_COUNTER
+    global SELLING_PERCENTAGE
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -40,6 +43,7 @@ def loadConfig():
     LOSS_PERCENTAGE = x.get("PercentualePerdita")
     TO_IGNORE = x.get("DaIgnorare")
     EQUAL_COUNTER = x.get("ContatoreUguale")
+    SELLING_PERCENTAGE = x.get("PercentualeVendita")
 
 ############################################################################################################################################
 def doRequest(endpoint):
@@ -151,7 +155,20 @@ def compareRegisters(actual):
 
                     sell_cause = None
 
-                    if(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
+                    earningPercentage = 0
+                    if(historyPurchasing != None):
+                        earningPercentage = (new_price-historyPurchasing)/historyPurchasing * 100 ## CASE 0 - TICK  PERCENTAGE 
+                    
+                    if(earningPercentage>=SELLING_PERCENTAGE and isPurchased):
+                        notifyExchange=-1
+                        max_price=None
+                        incrementCounter=0
+                        equal_counter=0
+                        isPurchased=False
+
+                        sell_cause="Top"
+
+                    elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
                         historyMaxPrice=new_price
