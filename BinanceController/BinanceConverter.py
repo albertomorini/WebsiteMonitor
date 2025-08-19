@@ -1,92 +1,71 @@
-# # import requests
-# # import time
-# # import hashlib
-# # import hmac
-
-# # # Your Binance API keys
-# # api_key = 'your_api_key'
-# # api_secret = 'your_api_secret'
-
-# # # Base URL for the API
-# # base_url = 'https://api.binance.com'
-
-# # # Define the conversion parameters
-# # from_asset = 'BTC'  # The asset you are converting from
-# # to_asset = 'USDT'   # The asset you are converting to
-# # amount = 0.1        # The amount to convert
-
-# # # Generate the timestamp and signature
-# # timestamp = str(int(time.time() * 1000))
-# # params = {
-# #     'fromAsset': from_asset,
-# #     'toAsset': to_asset,
-# #     'amount': amount,
-# #     'timestamp': timestamp
-# # }
-
-# # # Create the query string
-# # query_string = '&'.join([f"{key}={value}" for key, value in params.items()])
-
-# # # Create the signature
-# # signature = hmac.new(api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
-
-# # # Add the signature to the parameters
-# # params['signature'] = signature
-
-# # # Headers for authentication
-# # headers = {
-# #     'X-MBX-APIKEY': api_key
-# # }
-
-# # # Send the POST request
-# # response = requests.post(f"{base_url}/v3/asset/convert", headers=headers, params=params)
-
-# # # Check the response
-# # if response.status_code == 200:
-# #     print("Conversion successful:", response.json())
-# # else:
-# #     print(f"Error: {response.status_code}, {response.json()}")
-
-
-
-import requests
 import time
-import hashlib
 import hmac
+import hashlib
+import requests
+import json
+
+config_file = open("./API_CONVERT.json",'r')
+config = json.loads(config_file.read())
+API_KEY = config.get("API_KEY")
+API_SECRET = config.get("API_SECRET")
 
 
-api_key = 'your_api_key'
-api_secret = 'your_api_secret'
-base_url = 'https://api.binance.com'
+URL_PROPOSE = 'https://api.binance.com/sapi/v1/convert/getQuote'
+URL_ACCEPT = 'https://api.binance.com/sapi/v1/convert/acceptQuote'
 
-##################################################################################3
-
-def getTimestamp():
-    return str(int(time.time() * 1000))
-
-
-def doConversion(curr_start,curr_end,amount):
-    ### PARAMS
-    params = params = {
-        'fromAsset': curr_start,
-        'toAsset': curr_end,
-        'amount': amount,
-        'timestamp': timestamp
-    }
+# def getPropose(from_curr, to_curr, amount):
     
-    query_string = '&'.join([f"{key}={value}" for key, value in params.items()])
-    signature = hmac.new(api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+
+#     # Send POST request
+#     response = requests.post(URL_PROPOSE, headers=headers, data=params)
+
+#     return response.json()
+
+def getPropose(headers,params):
+    
+
+    # Send POST request
+    response = requests.post(URL_PROPOSE, headers=headers, data=params)
+
+    return response.json()
+
+
+def acceptPropose(from_curr, to_curr, amount):
+    
+    
+    # Parameters for convert
+    params = {
+        'fromAsset': from_curr,
+        'toAsset': to_curr,
+        'fromAmount': amount,
+        'timestamp': int(time.time() * 1000),
+        'recvWindow': 5000
+    }
+
+    # Create query string
+    query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
+
+    # Generate HMAC SHA256 signature
+    signature = hmac.new(API_SECRET.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+
+    # Add signature to parameters
     params['signature'] = signature
 
-    ### HEADERS
+    # Set headers
     headers = {
-        'X-MBX-APIKEY': api_key
+        'X-MBX-APIKEY': API_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    ## DO REQUEST
-    response = requests.post(f"{base_url}/v3/asset/convert", headers=headers, params=params)
+    dummy_propose = getPropose(headers,params)
+    print(dummy_propose)
+    print(dummy_propose.get("quoteId"))
 
-    if response.status_code == 200:
-        print("Conversion successful:", response.json())
-    else:
-        print(f"Error: {response.status_code}, {response.json()}")
+    response = requests.post(URL_ACCEPT, headers=headers, data={
+        "quoteId": dummy_propose.get("quoteId")
+    })
+    print(response.text)
+
+    pass
+
+acceptPropose("BTC","USDC",0.000008)
