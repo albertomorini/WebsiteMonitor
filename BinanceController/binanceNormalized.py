@@ -18,6 +18,8 @@ INCREMENT_PERCENTAGE = -1
 LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
+FROM_AMOUNT = 0 ## TO BUY
+
 TO_IGNORE = []
 
 SELLING_PERCENTAGE = -1
@@ -36,6 +38,8 @@ def loadConfig():
     global TO_IGNORE
     global EQUAL_COUNTER
     global SELLING_PERCENTAGE
+    global FROM_AMOUNT 
+
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -47,6 +51,7 @@ def loadConfig():
     TO_IGNORE = x.get("DaIgnorare")
     EQUAL_COUNTER = x.get("ContatoreUguale")
     SELLING_PERCENTAGE = x.get("PercentualeVendita")
+    FROM_AMOUNT = x.get("FROM_AMOUNT")
 
 
 
@@ -230,7 +235,7 @@ def compareRegisters(actual):
                         print(dummyValue)
                         if(dummyValue not in WALLET):
                             print("ACQUISTO",getSymbolWOBase(symbol))
-                            binanceConverter.acceptPropose("BTC",getSymbolWOBase(symbol), 0.0000088)
+                            binanceConverter.acceptPropose("BTC",getSymbolWOBase(symbol), FROM_AMOUNT)
                             WALLET.append(dummyValue)
 
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL

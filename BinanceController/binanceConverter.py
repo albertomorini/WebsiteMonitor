@@ -94,6 +94,6 @@ def acceptPropose(from_curr, to_curr, amount):
         print(e)
 
 
-# acceptPropose("BTC","USDC",0.000008)
-# acceptPropose("USDC","BTC",getAmount("USDC"))
- # getAmount("BTC")
+# # # acceptPropose("BTC","USDC",0.000008)
+# # # acceptPropose("USDC","BTC",getAmount("USDC"))
+# #  # getAmount("BTC")
