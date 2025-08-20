@@ -3,6 +3,7 @@ import datetime
 import json
 import time
 import telegramTalker # import TelegramTalker
+import binanceConverter
 import hashlib ## just for testing
 import sys
 
@@ -22,6 +23,8 @@ TO_IGNORE = []
 SELLING_PERCENTAGE = -1
 
 REGISTER_GLOBAL = list()
+
+WALLET = list()
 ############################################################################################################################################
 
 def loadConfig():
@@ -76,6 +79,20 @@ def loadJSON(path):
         return dict()
 ############################################################################################################################################
 
+def getSymbolWOBase(symbol):
+    print(symbol)
+    indxBase=0
+    try:
+        indxBase = symbol.index("USD")
+    except Exception:
+        indxBase = symbol.index("BTC")
+    
+    return symbol[0:indxBase]
+
+
+############################################################################################################################################
+
+
 ## Just create the message and send to Telegram Bot
 def sendAlert(notificationMessage):
     try:
@@ -115,7 +132,6 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            print(strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
@@ -193,6 +209,9 @@ def compareRegisters(actual):
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
+                        ### CONVERT - SELL
+                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),"BTC",binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                        WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
@@ -206,6 +225,14 @@ def compareRegisters(actual):
                         isPurchased=True
                         incrementCounter=0
                         historyPurchasing=new_price
+                        ### CONVERT - BUY
+                        dummyValue=getSymbolWOBase(symbol)
+                        print(dummyValue)
+                        if(dummyValue not in WALLET):
+                            print("ACQUISTO",getSymbolWOBase(symbol))
+                            binanceConverter.acceptPropose("BTC",getSymbolWOBase(symbol), 0.0000088)
+                            WALLET.append(dummyValue)
+
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa contatore UGUALE PER "+str(equal_counter)+" VOLTE") 
                         sell_cause="Ugual"
@@ -215,7 +242,9 @@ def compareRegisters(actual):
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
-
+                        ### CONVERT - SELL
+                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),"BTC",binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                        WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
                         "time": getUnixtime(),
@@ -244,7 +273,7 @@ def start():
         # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
         actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
 
-        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+        # print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:
@@ -285,11 +314,11 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 0})
           
         if(len(notificationMessage)==0):
-            print("Attendi...")
+            # print("Attendi...")
             pass
         else:
             print("Messaggio inviato")
-        print("................................................")
+        # print("................................................")
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
