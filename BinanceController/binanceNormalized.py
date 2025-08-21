@@ -18,7 +18,8 @@ INCREMENT_PERCENTAGE = -1
 LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
-FROM_AMOUNT = 0 ## TO BUY
+CONVERT_AMOUNT = 0 ## TO BUY
+CONVERT_SYMBOL = "" ## TO BUY
 
 TO_IGNORE = []
 
@@ -38,7 +39,8 @@ def loadConfig():
     global TO_IGNORE
     global EQUAL_COUNTER
     global SELLING_PERCENTAGE
-    global FROM_AMOUNT 
+    global CONVERT_AMOUNT 
+    global CONVERT_SYMBOL 
 
 
     x = loadJSON('./Normalized_Config.json') #config
@@ -51,7 +53,8 @@ def loadConfig():
     TO_IGNORE = x.get("DaIgnorare")
     EQUAL_COUNTER = x.get("ContatoreUguale")
     SELLING_PERCENTAGE = x.get("PercentualeVendita")
-    FROM_AMOUNT = x.get("FROM_AMOUNT")
+    CONVERT_AMOUNT = x.get("CONVERT_AMOUNT")
+    CONVERT_SYMBOL = x.get("CONVERT_SYMBOL")
 
 
 
@@ -215,7 +218,7 @@ def compareRegisters(actual):
                         equal_counter=0
                         isPurchased=False
                         ### CONVERT - SELL
-                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),"BTC",binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                         WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
@@ -235,7 +238,7 @@ def compareRegisters(actual):
                         print(dummyValue)
                         if(dummyValue not in WALLET):
                             print("ACQUISTO",getSymbolWOBase(symbol))
-                            binanceConverter.acceptPropose("BTC",getSymbolWOBase(symbol), FROM_AMOUNT)
+                            binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
 
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
@@ -248,7 +251,7 @@ def compareRegisters(actual):
                         equal_counter=0
                         isPurchased=False
                         ### CONVERT - SELL
-                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),"BTC",binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                         WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
