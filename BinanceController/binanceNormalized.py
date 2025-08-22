@@ -194,6 +194,9 @@ def compareRegisters(actual):
                         isPurchased=False
 
                         sell_cause="Top"
+                        ### CONVERT - SELL
+                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                        WALLET.remove(getSymbolWOBase(symbol))
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
