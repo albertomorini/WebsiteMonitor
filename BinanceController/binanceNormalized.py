@@ -194,9 +194,10 @@ def compareRegisters(actual):
                         isPurchased=False
 
                         sell_cause="Top"
-                        ### CONVERT - SELL
-                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
-                        WALLET.remove(getSymbolWOBase(symbol))
+                        ### CONVERT - OUTCOME::SELL
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
@@ -221,8 +222,9 @@ def compareRegisters(actual):
                         equal_counter=0
                         isPurchased=False
                         ### CONVERT - SELL
-                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
-                        WALLET.remove(getSymbolWOBase(symbol))
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
@@ -254,8 +256,9 @@ def compareRegisters(actual):
                         equal_counter=0
                         isPurchased=False
                         ### CONVERT - SELL
-                        binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
-                        WALLET.remove(getSymbolWOBase(symbol))
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
                         "time": getUnixtime(),
@@ -284,7 +287,7 @@ def start():
         # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
         actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
 
-        # print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+        print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:
@@ -325,11 +328,11 @@ def start():
                 notificationMessage.append({"cur": i, "flag": 0})
           
         if(len(notificationMessage)==0):
-            # print("Attendi...")
+            print("Attendi...")
             pass
         else:
             print("Messaggio inviato")
-        # print("................................................")
+        print("................................................")
         sendAlert(notificationMessage)
 
         time.sleep(SLEEP_TIME)
