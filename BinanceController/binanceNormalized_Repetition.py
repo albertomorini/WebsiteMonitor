@@ -3,6 +3,7 @@ import datetime
 import json
 import time
 import telegramTalker # import TelegramTalker
+import binanceConverter
 import hashlib ## just for testing
 import sys
 
@@ -17,11 +18,16 @@ INCREMENT_PERCENTAGE = -1
 LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
-SELLING_PERCENTAGE = -1
+CONVERT_AMOUNT = 0 ## TO BUY
+CONVERT_SYMBOL = "" ## TO BUY
 
 TO_IGNORE = []
 
+SELLING_PERCENTAGE = -1
+
 REGISTER_GLOBAL = list()
+
+WALLET = list()
 ############################################################################################################################################
 
 def loadConfig():
@@ -33,6 +39,9 @@ def loadConfig():
     global TO_IGNORE
     global EQUAL_COUNTER
     global SELLING_PERCENTAGE
+    global CONVERT_AMOUNT 
+    global CONVERT_SYMBOL 
+
 
     x = loadJSON('./Normalized_Config.json') #config
 
@@ -44,6 +53,10 @@ def loadConfig():
     TO_IGNORE = x.get("DaIgnorare")
     EQUAL_COUNTER = x.get("ContatoreUguale")
     SELLING_PERCENTAGE = x.get("PercentualeVendita")
+    CONVERT_AMOUNT = x.get("CONVERT_AMOUNT")
+    CONVERT_SYMBOL = x.get("CONVERT_SYMBOL")
+
+
 
 ############################################################################################################################################
 def doRequest(endpoint):
@@ -73,6 +86,20 @@ def loadJSON(path):
     except Exception:
         return dict()
 ############################################################################################################################################
+
+def getSymbolWOBase(symbol):
+    print(symbol)
+    indxBase=0
+    try:
+        indxBase = symbol.index("USD")
+    except Exception:
+        indxBase = symbol.index("BTC")
+    
+    return symbol[0:indxBase]
+
+
+############################################################################################################################################
+
 
 ## Just create the message and send to Telegram Bot
 def sendAlert(notificationMessage):
@@ -113,10 +140,10 @@ def sendAlert(notificationMessage):
 
                 strTMP += " || " + format(convertUnix2HumanTime(data.get("time"))) +" \n"
 
-            print(strTMP)
             telegramTalker.sendMessage(TELEGRAM_TOKEN,strTMP)
     except Exception as e:
         print(e)
+        
         
 
 ############################################################################################################################################
@@ -158,7 +185,7 @@ def compareRegisters(actual):
                     earningPercentage = 0
                     if(historyPurchasing != None):
                         earningPercentage = (new_price-historyPurchasing)/historyPurchasing * 100 ## CASE 0 - TICK  PERCENTAGE 
-                    
+
                     if(earningPercentage>=SELLING_PERCENTAGE and isPurchased):
                         notifyExchange=-1
                         max_price=None
@@ -167,7 +194,10 @@ def compareRegisters(actual):
                         isPurchased=False
 
                         sell_cause="Top"
-
+                        ### CONVERT - OUTCOME::SELL
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
@@ -184,15 +214,17 @@ def compareRegisters(actual):
                     
                     elif((-1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa percentuale increment minore") 
+                        sell_cause="Perc"
 
                         notifyExchange=-1
                         max_price=None
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
-
-                        sell_cause="Perc"
-
+                        ### CONVERT - SELL
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
@@ -200,15 +232,21 @@ def compareRegisters(actual):
 
 
                     ## Notifying
-                    if(incrementCounter==INCREMENT_COUNTER ): #OUTCOME::BUY
+                    if(incrementCounter==INCREMENT_COUNTER): #OUTCOME::BUY
                         notifyExchange=1
                         equal_counter=0
                         isPurchased=True
                         incrementCounter=0
                         historyPurchasing=new_price
+                        ### CONVERT - BUY
+                        dummyValue=getSymbolWOBase(symbol)
+                        if(dummyValue not in WALLET):
+                            print("ACQUISTO",getSymbolWOBase(symbol))
+                            binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
+                            WALLET.append(dummyValue)
+
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa contatore UGUALE PER "+str(equal_counter)+" VOLTE") 
-                        
                         sell_cause="Ugual"
 
                         notifyExchange=-1
@@ -216,7 +254,10 @@ def compareRegisters(actual):
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
-
+                        ### CONVERT - SELL
+                        if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
+                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
                         "time": getUnixtime(),
