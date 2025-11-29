@@ -188,7 +188,7 @@ def compareRegisters(actual):
 
                     if(earningPercentage>=SELLING_PERCENTAGE and isPurchased):
                         notifyExchange=-1
-                        max_price=None
+                        ## max_price=None
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
@@ -197,7 +197,7 @@ def compareRegisters(actual):
                         ### CONVERT - OUTCOME::SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
                             binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
-                            ###WALLET.remove(getSymbolWOBase(symbol)) ##---> 18Oct2025 keep in wallet when sold by top
+                            ###WALLET.remove(getSymbolWOBase(symbol)) ##---> 18oct2025 keep in wallet when sold by top
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
@@ -228,6 +228,7 @@ def compareRegisters(actual):
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
+                        max_price = new_price
 
 
 

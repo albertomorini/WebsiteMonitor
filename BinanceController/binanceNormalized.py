@@ -188,7 +188,7 @@ def compareRegisters(actual):
 
                     if(earningPercentage>=SELLING_PERCENTAGE and isPurchased):
                         notifyExchange=-1
-                        max_price=None
+                        # max_price=None
                         incrementCounter=0
                         equal_counter=0
                         isPurchased=False
@@ -228,6 +228,7 @@ def compareRegisters(actual):
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
+                        new_price<max_price
 
 
 
