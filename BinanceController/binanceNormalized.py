@@ -199,18 +199,18 @@ def compareRegisters(actual):
                             binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
-                        incrementCounter += 1 #if up, increment the counter -- contatore notifica
-                        max_price=new_price ## update max_price
-                        historyMaxPrice=new_price
+                        # incrementCounter += 1 #if up, increment the counter -- contatore notifica  #MODIFICA 28/JAN/2026
+                        # max_price=new_price ## update max_price #MODIFICA 28/JAN/2026
+                        # historyMaxPrice=new_price 
                         equal_counter = 0
                     elif(new_price>max_price and percentageIncrement<=INCREMENT_PERCENTAGE): ## case 2 
-                        incrementCounter=0
-                        max_price=new_price ## update max_price
-                        historyMaxPrice=new_price
+                        # incrementCounter=0 #MODIFICA 28/JAN/2026
+                        # max_price=new_price #MODIFICA 28/JAN/2026
+                        # historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price==max_price): ##EQUAL no increment, no loss
                         equal_counter += 1
-                        incrementCounter=0
+                        # incrementCounter=0 #MODIFICA 28/JAN/2026
                     
                     elif((-1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa percentuale increment minore") 
@@ -228,8 +228,7 @@ def compareRegisters(actual):
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
-                        new_price<max_price
-
+                        # max_price = new_price  #MODIFICA 28/JAN/2026
 
 
                     ## Notifying

@@ -116,7 +116,7 @@ def sendAlert(notificationMessage):
                     indexUSD = dummy_symbol.index("BTC")
 
 
-                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("price")*100), 2)
+                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("historyPurchasing")*100), 2)  ## MODIFICA ANDREA 1
 
 
                 if(i.get("flag")==0):
@@ -199,18 +199,18 @@ def compareRegisters(actual):
                             binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             ###WALLET.remove(getSymbolWOBase(symbol)) ##---> 18oct2025 keep in wallet when sold by top
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
-                        incrementCounter += 1 #if up, increment the counter -- contatore notifica
-                        max_price=new_price ## update max_price
-                        historyMaxPrice=new_price
+                        incrementCounter += 1 #if up, increment the counter -- contatore notifica  
+                        # max_price=new_price ## update max_price #MODIFICA 28/JAN/2026
+                        # historyMaxPrice=new_price 
                         equal_counter = 0
                     elif(new_price>max_price and percentageIncrement<=INCREMENT_PERCENTAGE): ## case 2 
-                        incrementCounter=0
-                        max_price=new_price ## update max_price
-                        historyMaxPrice=new_price
+                        # incrementCounter=0 #MODIFICA 28/JAN/2026
+                        # max_price=new_price #MODIFICA 28/JAN/2026
+                        # historyMaxPrice=new_price
                         equal_counter = 0
                     elif(new_price==max_price): ##EQUAL no increment, no loss
                         equal_counter += 1
-                        incrementCounter=0
+                        # incrementCounter=0 #MODIFICA 28/JAN/2026
                     
                     elif((-1*percentageIncrement>=LOSS_PERCENTAGE) and isPurchased): ## case 4, in this case we sell the purchased symbol ## OUTCOME::SELL
                         print("VENDO: ", symbol, " - causa percentuale increment minore") 
@@ -228,7 +228,7 @@ def compareRegisters(actual):
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
                         equal_counter+=1
-                        max_price = new_price
+                         # max_price = new_price  #MODIFICA 28/JAN/2026
 
 
 
@@ -236,9 +236,11 @@ def compareRegisters(actual):
                     if(incrementCounter==INCREMENT_COUNTER): #OUTCOME::BUY
                         notifyExchange=1
                         equal_counter=0
+                        if(not isPurchased):                        ## MODIFICA ANDREA 2
+                            historyPurchasing=new_price             ## MODIFICA ANDREA 2
                         isPurchased=True
                         incrementCounter=0
-                        historyPurchasing=new_price
+                        ## historyPurchasing=new_price                                                          MODIFICA ANDREA 2
                         ### CONVERT - BUY
                         dummyValue=getSymbolWOBase(symbol)
                         if(dummyValue not in WALLET):
