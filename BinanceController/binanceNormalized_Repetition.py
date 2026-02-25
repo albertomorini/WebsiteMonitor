@@ -116,7 +116,7 @@ def sendAlert(notificationMessage):
                     indexUSD = dummy_symbol.index("BTC")
 
 
-                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("price")*100), 2)
+                increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("historyPurchasing")*100), 2)  ## MODIFICA ANDREA 1
 
 
                 if(i.get("flag")==0):
@@ -236,12 +236,15 @@ def compareRegisters(actual):
                     if(incrementCounter==INCREMENT_COUNTER): #OUTCOME::BUY
                         notifyExchange=1
                         equal_counter=0
+                        ## if(not isPurchased):                        ## MODIFICA ANDREA 2
+                        ##     historyPurchasing=new_price             ## MODIFICA ANDREA 2
                         isPurchased=True
                         incrementCounter=0
-                        historyPurchasing=new_price
+                        ## historyPurchasing=new_price                 MODIFICA ANDREA 2
                         ### CONVERT - BUY
                         dummyValue=getSymbolWOBase(symbol)
                         if(dummyValue not in WALLET):
+                            historyPurchasing=new_price             ## MODIFICA ANDREA 2
                             print("ACQUISTO",getSymbolWOBase(symbol))
                             binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
