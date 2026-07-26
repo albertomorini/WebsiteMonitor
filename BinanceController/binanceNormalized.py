@@ -7,8 +7,8 @@ import binanceConverter
 import hashlib ## just for testing
 import sys
 
-BASE_URI = 'https://api.binance.com/api/v3/'
-BASE_URI_CONVERT = "https://www.binance.com/en/convert/"
+BASE_URI = 'https://www.okx.com/api/v5/'
+BASE_URI_CONVERT = "https://www.okx.com/convert"
 MODE = None
 
 TELEGRAM_TOKEN = ''
@@ -19,7 +19,6 @@ LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
 CONVERT_AMOUNT = 0 ## TO BUY
-CONVERT_SYMBOL = "" ## TO BUY
 
 TO_IGNORE = []
 
@@ -40,7 +39,6 @@ def loadConfig():
     global EQUAL_COUNTER
     global SELLING_PERCENTAGE
     global CONVERT_AMOUNT 
-    global CONVERT_SYMBOL 
 
 
     x = loadJSON('./Normalized_Config.json') #config
@@ -54,7 +52,6 @@ def loadConfig():
     EQUAL_COUNTER = x.get("ContatoreUguale")
     SELLING_PERCENTAGE = x.get("PercentualeVendita")
     CONVERT_AMOUNT = x.get("CONVERT_AMOUNT")
-    CONVERT_SYMBOL = x.get("CONVERT_SYMBOL")
 
 
 
@@ -196,7 +193,9 @@ def compareRegisters(actual):
                         sell_cause="Top"
                         ### CONVERT - OUTCOME::SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okxConverter.create_spot_order(symbol,"buy", CONVERT_AMOUNT)
+
+                            # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         # incrementCounter += 1 #if up, increment the counter -- contatore notifica  #MODIFICA 28/JAN/2026
@@ -223,7 +222,9 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okx.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
+
+                            # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
@@ -243,7 +244,8 @@ def compareRegisters(actual):
                         print(dummyValue)
                         if(dummyValue not in WALLET):
                             print("ACQUISTO",getSymbolWOBase(symbol))
-                            binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
+                            okx.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
+                            # binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
 
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
@@ -257,7 +259,8 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okx.create_spot_order(symbol,"sell",okx.get_amount(symbol))
+                            # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
@@ -283,9 +286,14 @@ def start():
     print("Binance normalized avviato.")
     counter = 0
     while True:
-        actual_register = doRequest("ticker/price")
-        # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
+        
+        actual_register = doRequest("market/tickers?instType=SPOT")
+
+        actual_register = [
+            {"symbol": item["instId"], "price": item["last"]}
+            for item in actual_register["data"]
+            if "usd" in item["instId"].lower() or "eur" in item["instId"].lower()
+        ]
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 

@@ -20,7 +20,6 @@ LOSS_PERCENTAGE = -1
 EQUAL_COUNTER = -1
 
 CONVERT_AMOUNT = 0 ## TO BUY
-CONVERT_SYMBOL = "" ## TO BUY
 
 TO_IGNORE = []
 
@@ -41,7 +40,6 @@ def loadConfig():
     global EQUAL_COUNTER
     global SELLING_PERCENTAGE
     global CONVERT_AMOUNT 
-    global CONVERT_SYMBOL 
 
 
     x = loadJSON('./Normalized_Config.json') #config
@@ -55,7 +53,6 @@ def loadConfig():
     EQUAL_COUNTER = x.get("ContatoreUguale")
     SELLING_PERCENTAGE = x.get("PercentualeVendita")
     CONVERT_AMOUNT = x.get("CONVERT_AMOUNT")
-    CONVERT_SYMBOL = x.get("CONVERT_SYMBOL")
 
 
 
@@ -286,7 +283,7 @@ def compareRegisters(actual):
 
 
 def start():
-    print("OKX normalized avviato.")
+    print("OKX normalized avviato - REPETITION.")
     counter = 0
     while True:
         actual_register = doRequest("market/tickers?instType=SPOT")
@@ -296,8 +293,6 @@ def start():
             for item in actual_register["data"]
             if "usd" in item["instId"].lower() or "eur" in item["instId"].lower()
         ]
-
-        print(actual_register)        
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
