@@ -29,3 +29,8 @@ CASO 5 (percentuale<0 e percentuale < percentuale PERDITA):
 Se contatoreSalita=Contatore: compro 
 Se contatoreUguale=ContatoreUguale: vendo
 Se CASO4: vendo
+
+---------------------------
+api-convert
+
+trading-spot a mercato

@@ -3,11 +3,13 @@ import datetime
 import json
 import time
 import telegramTalker # import TelegramTalker
-import binanceConverter
+# import binanceConverter
+import okxConverter
 import hashlib ## just for testing
 import sys
 
-BASE_URI = 'https://api.binance.com/api/v3/'
+# BASE_URI = 'https://api.binance.com/api/v3/'
+BASE_URI = 'https://www.okx.com/api/v5/'
 BASE_URI_CONVERT = "https://www.binance.com/en/convert/"
 MODE = None
 
@@ -90,11 +92,7 @@ def loadJSON(path):
 def getSymbolWOBase(symbol):
     print(symbol)
     indxBase=0
-    try:
-        indxBase = symbol.index("USD")
-    except Exception:
-        indxBase = symbol.index("BTC")
-    
+    indxBase = symbol.index("-")
     return symbol[0:indxBase]
 
 
@@ -110,10 +108,7 @@ def sendAlert(notificationMessage):
                 data = i.get("cur")
                 
                 dummy_symbol=data.get("symbol")
-                try:
-                    indexUSD = dummy_symbol.index("USD")
-                except Exception:
-                    indexUSD = dummy_symbol.index("BTC")
+                indexUSD = dummy_symbol.index("-")
 
 
                 increment = round( ((data.get("price")-data.get("historyPurchasing"))/data.get("historyPurchasing")*100), 2)  ## MODIFICA ANDREA 1
@@ -286,9 +281,15 @@ def start():
     print("Binance normalized avviato.")
     counter = 0
     while True:
-        actual_register = doRequest("ticker/price")
-        # actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1 or (x.get('symbol')[-3:]) == "BTC"  ), actual_register)) ## filter only the currency with USDC
-        actual_register = list (filter((lambda x:  (x.get('symbol').find('USDC')) != -1 or (x.get('symbol').find('USDT')) != -1   ), actual_register)) ## filter only the currency with USDC
+        actual_register = doRequest("market/tickers?instType=SPOT")
+
+        actual_register = [
+            {"symbol": item["instId"], "price": item["last"]}
+            for item in actual_register["data"]
+            if "usd" in item["instId"].lower() or "eur" in item["instId"].lower()
+        ]
+
+        print(actual_register)        
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
 
