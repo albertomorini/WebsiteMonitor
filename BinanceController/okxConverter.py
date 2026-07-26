@@ -37,6 +37,10 @@ def get_okx_headers(method, request_path, body=""):
     }
 
 def get_amount(selected_cur):
+
+    if("-" in selected_cur): ## se passo la coppia BASE-QUOTE splitto prendendo la BASE
+        selected_cur = selected_cur.split("-")[0]
+
     headers = get_okx_headers(
         method="GET",
         request_path="/api/v5/account/balance"
@@ -60,18 +64,17 @@ def get_amount(selected_cur):
 
     return "0"
 
-
 def create_spot_order(inst_id, side, size, order_type="market", tgt_ccy="base_ccy"):
 
     request_path = "/api/v5/trade/order"
 
     body = {
-        "instId": inst_id,
+        "instId": inst_id, #The trading pair (instrument ID) / "BTC-USDT"
         "tdMode": "cash",
-        "side": side,
-        "ordType": order_type,
-        "sz": str(size),
-        "tgtCcy": tgt_ccy
+        "side": side, # Whether you're buying or selling "buy" or "sell"
+        "ordType": order_type, # Type of order / "market" or "limit"
+        "sz": str(size), # Amount to trade 0.01 or 100
+        "tgtCcy": tgt_ccy # Which currency size refers to "base_ccy" or "quote_ccy"
     }
 
     body_json = json.dumps(body)
@@ -94,16 +97,3 @@ def create_spot_order(inst_id, side, size, order_type="market", tgt_ccy="base_cc
         raise Exception(result)
 
     return result["data"][0]
-
-
-
-def sell_all(inst_id, currency):
-
-    amount = get_amount(currency)
-
-    return create_spot_order(
-        inst_id=inst_id,
-        side="sell",
-        size=amount,
-        tgt_ccy="base_ccy"
-    )

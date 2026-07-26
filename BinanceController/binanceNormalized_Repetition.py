@@ -3,14 +3,13 @@ import datetime
 import json
 import time
 import telegramTalker # import TelegramTalker
-# import binanceConverter
 import okxConverter
 import hashlib ## just for testing
 import sys
 
 # BASE_URI = 'https://api.binance.com/api/v3/'
 BASE_URI = 'https://www.okx.com/api/v5/'
-BASE_URI_CONVERT = "https://www.binance.com/en/convert/"
+BASE_URI_CONVERT = "https://www.okx.com/convert"
 MODE = None
 
 TELEGRAM_TOKEN = ''
@@ -191,8 +190,11 @@ def compareRegisters(actual):
                         sell_cause="Top"
                         ### CONVERT - OUTCOME::SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okxConverter.create_spot_order(symbol,"buy", CONVERT_AMOUNT)
+                            
+                            # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             ###WALLET.remove(getSymbolWOBase(symbol)) ##---> 18oct2025 keep in wallet when sold by top
+
                     elif(percentageIncrement>INCREMENT_PERCENTAGE): # Up the increment counter - currency is growning ## ~ se PREZZO ATTUALE > del 0,5% di PREZZO ALTO :  # case 1
                         incrementCounter += 1 #if up, increment the counter -- contatore notifica
                         max_price=new_price ## update max_price
@@ -218,7 +220,9 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okx.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
+
+                            # # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
                         incrementCounter=0
@@ -241,7 +245,9 @@ def compareRegisters(actual):
                         if(dummyValue not in WALLET):
                             historyPurchasing=new_price             ## MODIFICA ANDREA 2
                             print("ACQUISTO",getSymbolWOBase(symbol))
-                            binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
+                            
+                            okx.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
+                            # binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
 
                     elif(equal_counter==EQUAL_COUNTER and isPurchased): #OUTCOME::SELL
@@ -255,7 +261,9 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
+                            okx.create_spot_order(symbol,"sell",okx.get_amount(symbol))
+
+                            # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {
                         "symbol":symbol,
@@ -278,7 +286,7 @@ def compareRegisters(actual):
 
 
 def start():
-    print("Binance normalized avviato.")
+    print("OKX normalized avviato.")
     counter = 0
     while True:
         actual_register = doRequest("market/tickers?instType=SPOT")
