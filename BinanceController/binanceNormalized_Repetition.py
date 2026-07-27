@@ -217,7 +217,7 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            okx.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
+                            okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
 
                             # # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
@@ -243,7 +243,7 @@ def compareRegisters(actual):
                             historyPurchasing=new_price             ## MODIFICA ANDREA 2
                             print("ACQUISTO",getSymbolWOBase(symbol))
                             
-                            okx.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
+                            okxConverter.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
                             # binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
 
@@ -258,7 +258,7 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            okx.create_spot_order(symbol,"sell",okx.get_amount(symbol))
+                            okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
 
                             # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
@@ -291,10 +291,12 @@ def start():
         actual_register = [
             {"symbol": item["instId"], "price": item["last"]}
             for item in actual_register["data"]
-            if "usd" in item["instId"].lower() or "eur" in item["instId"].lower()
+            if "eur" in item["instId"].lower() # "usd" in item["instId"].lower() or
         ]
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
+
+
 
         ## ADDED LATELY: removing unwanted symbols
         for x in actual_register:

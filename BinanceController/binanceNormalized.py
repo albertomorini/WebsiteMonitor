@@ -222,7 +222,7 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            okx.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
+                            okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
 
                             # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
@@ -244,7 +244,7 @@ def compareRegisters(actual):
                         print(dummyValue)
                         if(dummyValue not in WALLET):
                             print("ACQUISTO",getSymbolWOBase(symbol))
-                            okx.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
+                            okxConverter.create_spot_order(symbol,"buy",CONVERT_AMOUNT)
                             # binanceConverter.acceptPropose(CONVERT_SYMBOL,getSymbolWOBase(symbol), CONVERT_AMOUNT)
                             WALLET.append(dummyValue)
 
@@ -259,7 +259,7 @@ def compareRegisters(actual):
                         isPurchased=False
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            okx.create_spot_order(symbol,"sell",okx.get_amount(symbol))
+                            okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
                             # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     REGISTER_GLOBAL[indx] = {

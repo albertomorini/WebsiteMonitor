@@ -68,6 +68,11 @@ def create_spot_order(inst_id, side, size, order_type="market", tgt_ccy="base_cc
 
     request_path = "/api/v5/trade/order"
 
+    if(side=="sell"):
+        tgt_ccy = "base_ccy"
+    elif(side=="buy"):
+        tgt_ccy = "quote_ccy"
+
     body = {
         "instId": inst_id, #The trading pair (instrument ID) / "BTC-USDT"
         "tdMode": "cash",
@@ -97,3 +102,7 @@ def create_spot_order(inst_id, side, size, order_type="market", tgt_ccy="base_cc
         raise Exception(result)
 
     return result["data"][0]
+
+
+
+    
