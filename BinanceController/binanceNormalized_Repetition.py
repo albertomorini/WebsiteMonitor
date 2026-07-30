@@ -65,10 +65,9 @@ def doRequest(endpoint):
         else:
             return null
     except Exception:
-        print("ERRORE fetching sito")
-        return []
-        # time.sleep(5)
-        # doRequest(endpoint)
+        print("ERRORE fetching sito, riprovo in 5sec")
+        time.sleep(5)
+        return doRequest(endpoint)
 
 def getUnixtime():
     return (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
