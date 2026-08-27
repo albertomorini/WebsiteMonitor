@@ -186,8 +186,7 @@ def compareRegisters(actual):
                         sell_cause="Top"
                         ### CONVERT - OUTCOME::SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
-                            okxConverter.create_spot_order(symbol,"buy", CONVERT_AMOUNT)
-                            
+                            okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
                             # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             ###WALLET.remove(getSymbolWOBase(symbol)) ##---> 18oct2025 keep in wallet when sold by top
 
@@ -217,7 +216,6 @@ def compareRegisters(actual):
                         ### CONVERT - SELL
                         if(getSymbolWOBase(symbol) in WALLET): ## if still on wallet, to avoid the double sell that would go to error dued to double couple USDT and USD
                             okxConverter.create_spot_order(symbol,"sell",okxConverter.get_amount(symbol))
-
                             # # binanceConverter.acceptPropose(getSymbolWOBase(symbol),CONVERT_SYMBOL,binanceConverter.getAmount(getSymbolWOBase(symbol)))
                             WALLET.remove(getSymbolWOBase(symbol))
                     elif(new_price<max_price and isPurchased):
