@@ -6,6 +6,7 @@ import telegramTalker # import TelegramTalker
 import okxConverter
 import hashlib ## just for testing
 import sys
+import traceback
 
 # BASE_URI = 'https://api.binance.com/api/v3/'
 BASE_URI = 'https://www.okx.com/api/v5/'
@@ -289,10 +290,11 @@ def start():
             {"symbol": item["instId"], "price": item["last"]}
             for item in actual_register["data"]
             if "eur" in item["instId"].lower() # "usd" in item["instId"].lower() or
+            and item["last"] is not None
+            and str(item["last"]).replace(".", "", 1).isdigit()
         ]
 
         print("Scaricati i prezzi di "+str(len(actual_register))+" valute","- INFO", str(datetime.datetime.now()))
-
 
 
         ## ADDED LATELY: removing unwanted symbols
